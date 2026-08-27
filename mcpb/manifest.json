@@ -1,7 +1,7 @@
 {
   "manifest_version": "0.3",
-  "name": "employee-mcp-local",
-  "display_name": "Employee MCP (FastAPI local)",
+  "name": "users-mcp-local",
+  "display_name": "Users MCP (FastAPI local)",
   "version": "0.1.0",
   "description": "ローカルで動く FastAPI の MCP エンドポイント（/mcp）へ橋渡しする Claude Desktop 拡張。FastAPI サーバーは別途起動しておく。",
   "author": { "name": "d.bui" },

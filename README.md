@@ -1,6 +1,6 @@
 # MCP サーバーを作る ― FastAPI デモ
 
-FastAPI 製の小さな社員 API に、**AI（Claude など）向けの MCP** を載せる最小デモ。
+FastAPI 製の小さなユーザー管理 API に、**AI（Claude など）向けの MCP** を載せる最小デモ。
 [fastapi-mcp](https://github.com/tadata-org/fastapi_mcp) が API から MCP を自動生成する
 ので、本体は **`main.py` 1 ファイル（約 130 行）**。ローカル専用。
 
@@ -17,7 +17,7 @@ mcp-from-scratch/
 
 | 部品 | main.py の場所 | やること |
 |---|---|---|
-| ① 土台の API | `@app.get("/employees")` など | ふつうの CRUD |
+| ① 土台の API | `@app.get("/users")` など | ふつうの CRUD |
 | ② 入口（受付） | `login()` / `AGENT_KEYS` / `get_actor()` / `user_only()` | 人間 = ログイン、AI = 合鍵。入口で見分ける |
 | ③ やっていいことリスト | `include_operations=[...]` | ここに書いた操作だけ AI の道具になる |
 | ④ AI への説明係 | `FastApiMCP(app, ...)` | docstring から道具＋説明文を自動生成 |
@@ -47,28 +47,28 @@ python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
 ```bash
 TOKEN=$(curl -s -X POST localhost:8000/login -H 'Content-Type: application/json' \
   -d '{"login_id":"alice","password":"demo"}' | python3 -c 'import sys,json;print(json.load(sys.stdin)["token"])')
-curl -s localhost:8000/employees -H "Authorization: Bearer $TOKEN"           # 一覧
-curl -s -X DELETE localhost:8000/employees/3 -H "Authorization: Bearer $TOKEN"  # 削除も OK
+curl -s localhost:8000/users -H "Authorization: Bearer $TOKEN"           # 一覧
+curl -s -X DELETE localhost:8000/users/3 -H "Authorization: Bearer $TOKEN"  # 削除も OK
 ```
 
 AI の流れ（合鍵の既定値: `agent-demo-key`）:
 
 ```bash
-curl -s localhost:8000/employees -H "Authorization: Bearer agent-demo-key"        # ✔ 200
-curl -s -X DELETE localhost:8000/employees/2 -H "Authorization: Bearer agent-demo-key"  # ✘ 403
+curl -s localhost:8000/users -H "Authorization: Bearer agent-demo-key"        # ✔ 200
+curl -s -X DELETE localhost:8000/users/2 -H "Authorization: Bearer agent-demo-key"  # ✘ 403
 ```
 
 ## AI クライアントからつなぐ
 
 ```bash
 # Claude Code（このフォルダで開けば .mcp.json が自動検出されるので不要）
-claude mcp add --transport http employee http://localhost:8000/mcp \
+claude mcp add --transport http users http://localhost:8000/mcp \
   --header "Authorization: Bearer agent-demo-key"
 ```
 
 Cursor は `.cursor/mcp.json` に `url` + `headers` を書くだけ。
 
-会話例: 「社員一覧見せて」→ `list_employees`。「2 番を削除して」→ AI は削除の道具を
+会話例: 「ユーザー一覧見せて」→ `list_users`。「2 番を削除して」→ AI は削除の道具を
 持っていないので断ってくる（③ の見せ場）。
 
 ## Claude Desktop 用 `.mcpb`（任意）
@@ -78,7 +78,7 @@ HTTP 型の MCP はそのまま .mcpb にできないため、`mcpb/` に
 
 ```bash
 cd mcpb && npm install
-npx @anthropic-ai/mcpb pack . ../dist/employee-mcp-local.mcpb
+npx @anthropic-ai/mcpb pack . ../dist/users-mcp-local.mcpb
 ```
 
 できた .mcpb をダブルクリック → URL とアクセスキーをフォーム入力。FastAPI サーバー

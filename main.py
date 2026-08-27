@@ -8,7 +8,7 @@
 #   ⑤ つなぎ方       … ローカル URL（/mcp）でつなぐ。.mcpb は任意（mcpb/ 参照）
 #
 # 起動:  uvicorn main:app --port 8000
-# 接続:  Claude Code → claude mcp add --transport http employee \
+# 接続:  Claude Code → claude mcp add --transport http users \
 #            http://localhost:8000/mcp --header "Authorization: Bearer agent-demo-key"
 #        Cursor → .cursor/mcp.json に url + headers を書く
 
@@ -19,10 +19,10 @@ from fastapi_mcp import AuthConfig, FastApiMCP
 from pydantic import BaseModel
 
 # ── データ（デモ用メモリ保存）────────────────────────────────────
-employees = [
-    {"id": 1, "name": "John Doe", "salary": 500},
-    {"id": 2, "name": "Jane Smith", "salary": 700},
-    {"id": 3, "name": "Jim Beam", "salary": 600},
+users = [
+    {"id": 1, "name": "佐藤 太郎", "email": "sato@example.com"},
+    {"id": 2, "name": "鈴木 花子", "email": "suzuki@example.com"},
+    {"id": 3, "name": "田中 一郎", "email": "tanaka@example.com"},
 ]
 
 # ── ② 入口(受付) ─────────────────────────────────────────────────
@@ -50,7 +50,7 @@ def user_only(actor: dict = Depends(get_actor)) -> dict:
     return actor
 
 
-app = FastAPI(title="Employee API")
+app = FastAPI(title="Users API")
 
 
 class LoginBody(BaseModel):
@@ -69,52 +69,52 @@ def login(body: LoginBody):
 
 
 # ── ① 土台の API（docstring = ④ AI への説明文になる）──────────────
-@app.get("/employees", operation_id="list_employees")
-def list_employees(actor: dict = Depends(get_actor)):
-    """全社員の一覧（id・名前・給与）を返す。ID が必要な操作の前にまずこれで確認する。"""
-    return {"employees": employees}
+@app.get("/users", operation_id="list_users")
+def list_users(actor: dict = Depends(get_actor)):
+    """全ユーザーの一覧（id・名前・email）を返す。ID が必要な操作の前にまずこれで確認する。"""
+    return {"users": users}
 
 
-@app.get("/employees/{id}", operation_id="get_employee")
-def get_employee(id: int, actor: dict = Depends(get_actor)):
-    """社員を 1 人返す。id は list_employees で確認した実在の ID を使う（推測しない）。"""
-    for emp in employees:
-        if emp["id"] == id:
-            return {"employee": emp}
-    raise HTTPException(404, "その社員はいません")
+@app.get("/users/{id}", operation_id="get_user")
+def get_user(id: int, actor: dict = Depends(get_actor)):
+    """ユーザーを 1 人返す。id は list_users で確認した実在の ID を使う（推測しない）。"""
+    for user in users:
+        if user["id"] == id:
+            return {"user": user}
+    raise HTTPException(404, "そのユーザーはいません")
 
 
-class EmployeeBody(BaseModel):
+class UserBody(BaseModel):
     name: str
-    salary: int
+    email: str
 
 
-@app.post("/employees", operation_id="create_employee")
-def create_employee(body: EmployeeBody, actor: dict = Depends(get_actor)):
-    """社員を給与つきで追加し、追加した社員を返す。"""
-    emp = {"id": max((e["id"] for e in employees), default=0) + 1, **body.model_dump()}
-    employees.append(emp)
-    return {"employee": emp}
+@app.post("/users", operation_id="create_user")
+def create_user(body: UserBody, actor: dict = Depends(get_actor)):
+    """ユーザーを追加し、追加したユーザーを返す。"""
+    user = {"id": max((u["id"] for u in users), default=0) + 1, **body.model_dump()}
+    users.append(user)
+    return {"user": user}
 
 
-@app.delete("/employees/{id}", operation_id="delete_employee")
-def delete_employee(id: int, actor: dict = Depends(user_only)):
-    """社員を削除する（人間専用。AI の道具にもしない = 二重ガード）。"""
-    for emp in employees:
-        if emp["id"] == id:
-            employees.remove(emp)
+@app.delete("/users/{id}", operation_id="delete_user")
+def delete_user(id: int, actor: dict = Depends(user_only)):
+    """ユーザーを削除する（人間専用。AI の道具にもしない = 二重ガード）。"""
+    for user in users:
+        if user["id"] == id:
+            users.remove(user)
             return {"deleted": True}
-    raise HTTPException(404, "その社員はいません")
+    raise HTTPException(404, "そのユーザーはいません")
 
 
 # ── ③ やっていいことリスト + ④ 説明係 ────────────────────────────
 # include_operations に書いた操作だけが AI の道具箱に入る。
-# delete_employee と login はわざと入れない（AI からは見えない道具になる）。
+# delete_user と login はわざと入れない（AI からは見えない道具になる）。
 # さらに /mcp 自体にも合鍵チェック（AuthConfig）— リスト外 + 認証の二段構え。
 mcp = FastApiMCP(
     app,
-    name="Employee MCP",
-    include_operations=["list_employees", "get_employee", "create_employee"],
+    name="Users MCP",
+    include_operations=["list_users", "get_user", "create_user"],
     auth_config=AuthConfig(dependencies=[Depends(get_actor)]),
 )
 mcp.mount_http()  # → http://localhost:8000/mcp

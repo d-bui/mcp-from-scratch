@@ -117,9 +117,9 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
     <li>道具を渡していない操作は、AI は<b>そもそもできない</b><small>（今日もここが軸）</small></li>
   </ul>
   <div class="pill-row" style="margin-top:2.2vh">
-    <span class="pill">一覧を見る <code>list_employees</code></span>
-    <span class="pill">1 人を見る <code>get_employee</code></span>
-    <span class="pill">追加する <code>create_employee</code></span>
+    <span class="pill">一覧を見る <code>list_users</code></span>
+    <span class="pill">1 人を見る <code>get_user</code></span>
+    <span class="pill">追加する <code>create_user</code></span>
   </div>
   <p class="note">今日の道具箱はこの 3 つ（<b>削除の道具はわざと入れない</b>）。これを FastAPI + fastapi-mcp で、<b>main.py 1 ファイル（約 130 行）</b>に作る。</p>
 </section>
@@ -151,7 +151,7 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
   <div class="tblwrap">
   <table>
     <tr><th>部品</th><th>main.py の場所</th><th>やること（一言で）</th></tr>
-    <tr><td>①</td><td><code>@app.get("/employees")</code> など</td><td>ふつうの CRUD（お願いを受けて返す）</td></tr>
+    <tr><td>①</td><td><code>@app.get("/users")</code> など</td><td>ふつうの CRUD（お願いを受けて返す）</td></tr>
     <tr><td>②</td><td><code>login()</code> + <code>sessions</code></td><td>人間の入口: ログイン → 入館証を発行</td></tr>
     <tr><td>②</td><td><code>AGENT_KEYS</code> + <code>get_actor()</code></td><td>AI の入口: 合鍵を確認して「誰が来たか」を確定</td></tr>
     <tr><td>②</td><td><code>user_only()</code></td><td>門番: 破壊的操作を人間専用にする</td></tr>
@@ -169,17 +169,17 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
   <h2>土台を作る <small>― ただの FastAPI エンドポイント</small></h2>
   <div class="shot">
     <div class="file"><span class="dot"></span>main.py ― ① 土台</div>
-    <pre>@app.get(<span class="s">"/employees"</span>, operation_id=<span class="s">"list_employees"</span>)
-<span class="k">def</span> <span class="fn">list_employees</span>(actor: dict = Depends(get_actor)):
-<span class="hl">    <span class="s">"""全社員の一覧（id・名前・給与）を返す。ID が必要な操作の前にまずこれで確認する。"""</span></span>
-    <span class="k">return</span> {<span class="s">"employees"</span>: employees}
+    <pre>@app.get(<span class="s">"/users"</span>, operation_id=<span class="s">"list_users"</span>)
+<span class="k">def</span> <span class="fn">list_users</span>(actor: dict = Depends(get_actor)):
+<span class="hl">    <span class="s">"""全ユーザーの一覧（id・名前・email）を返す。ID が必要な操作の前にまずこれで確認する。"""</span></span>
+    <span class="k">return</span> {<span class="s">"users"</span>: users}
 
-@app.post(<span class="s">"/employees"</span>, operation_id=<span class="s">"create_employee"</span>)
-<span class="k">def</span> <span class="fn">create_employee</span>(body: EmployeeBody, actor: dict = Depends(get_actor)):
-<span class="hl">    <span class="s">"""社員を給与つきで追加し、追加した社員を返す。"""</span></span>
-    emp = {<span class="s">"id"</span>: ..., **body.model_dump()}
-    employees.append(emp)
-    <span class="k">return</span> {<span class="s">"employee"</span>: emp}</pre>
+@app.post(<span class="s">"/users"</span>, operation_id=<span class="s">"create_user"</span>)
+<span class="k">def</span> <span class="fn">create_user</span>(body: UserBody, actor: dict = Depends(get_actor)):
+<span class="hl">    <span class="s">"""ユーザーを追加し、追加したユーザーを返す。"""</span></span>
+    user = {<span class="s">"id"</span>: ..., **body.model_dump()}
+    users.append(user)
+    <span class="k">return</span> {<span class="s">"user"</span>: user}</pre>
   </div>
   <p class="note">ここまでは AI と無関係の、ふつうの Web API。<b>ハイライトの docstring があとで効いてくる</b>（④ で AI への説明文になる）。<code>operation_id</code> が道具の名前になる。</p>
 </section>
@@ -236,10 +236,10 @@ sessions: dict[str, str] = {}      <span class="c"># 入館証 → だれか</sp
     <div class="file"><span class="dot"></span>main.py ― ③ リスト + ④ 説明係の起動</div>
     <pre>mcp = FastApiMCP(
     app,
-    name=<span class="s">"Employee MCP"</span>,
+    name=<span class="s">"Users MCP"</span>,
 <span class="hl">    include_operations=[</span>
-<span class="hl">        <span class="s">"list_employees"</span>, <span class="s">"get_employee"</span>, <span class="s">"create_employee"</span>,</span>
-<span class="hl">        <span class="c"># delete_employee と login はわざと書かない = AI から見えない道具</span></span>
+<span class="hl">        <span class="s">"list_users"</span>, <span class="s">"get_user"</span>, <span class="s">"create_user"</span>,</span>
+<span class="hl">        <span class="c"># delete_user と login はわざと書かない = AI から見えない道具</span></span>
 <span class="hl">    ],</span>
     auth_config=AuthConfig(dependencies=[Depends(get_actor)]),  <span class="c"># /mcp 自体にも合鍵</span>
 )
@@ -256,10 +256,10 @@ mcp.mount_http()   <span class="c"># → http://localhost:8000/mcp</span></pre>
   <table>
     <tr><th>操作</th><th>人間</th><th>AI</th></tr>
     <tr><td>ログイン</td><td class="yes">✔（入口）</td><td>―</td></tr>
-    <tr><td>社員一覧を見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
-    <tr><td>社員を 1 人見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
-    <tr><td>社員を追加する</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
-    <tr><td>社員を削除する</td><td class="yes">✔</td><td class="no2">✘ 見えない + 門番 403</td></tr>
+    <tr><td>ユーザー一覧を見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
+    <tr><td>ユーザーを 1 人見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
+    <tr><td>ユーザーを追加する</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
+    <tr><td>ユーザーを削除する</td><td class="yes">✔</td><td class="no2">✘ 見えない + 門番 403</td></tr>
     <tr><td>/mcp につなぐ</td><td>―</td><td class="yes">✔ 合鍵必須</td></tr>
   </table>
   </div>
@@ -273,13 +273,13 @@ mcp.mount_http()   <span class="c"># → http://localhost:8000/mcp</span></pre>
   <div class="shot">
     <div class="file"><span class="dot"></span>書いたもの → fastapi-mcp が作るもの</div>
     <pre><span class="c"># main.py に書いたのはこれだけ:</span>
-@app.get(<span class="s">"/employees/{id}"</span>, operation_id=<span class="s">"get_employee"</span>)
-<span class="k">def</span> <span class="fn">get_employee</span>(id: int, actor: dict = Depends(get_actor)):
-<span class="hl">    <span class="s">"""社員を 1 人返す。id は list_employees で確認した実在の ID を使う（推測しない）。"""</span></span>
+@app.get(<span class="s">"/users/{id}"</span>, operation_id=<span class="s">"get_user"</span>)
+<span class="k">def</span> <span class="fn">get_user</span>(id: int, actor: dict = Depends(get_actor)):
+<span class="hl">    <span class="s">"""ユーザーを 1 人返す。id は list_users で確認した実在の ID を使う（推測しない）。"""</span></span>
 
 <span class="c"># ↓ AI にはこう見える（自動生成された道具）:</span>
-<span class="c">#   name:        get_employee</span>
-<span class="c">#   description: 社員を 1 人返す。id は list_employees で確認した</span>
+<span class="c">#   name:        get_user</span>
+<span class="c">#   description: ユーザーを 1 人返す。id は list_users で確認した</span>
 <span class="c">#                実在の ID を使う（推測しない）。</span>
 <span class="c">#   input:       { id: integer }   ← 型ヒントから自動</span></pre>
   </div>
@@ -303,7 +303,7 @@ mcp.mount_http()   <span class="c"># → http://localhost:8000/mcp</span></pre>
       <pre>$ uvicorn main:app --port 8000
 
 <span class="c"># Claude Code はこれだけ:</span>
-$ claude mcp add --transport http employee \
+$ claude mcp add --transport http users \
     http://localhost:8000/mcp \
     --header <span class="s">"Authorization: Bearer agent-demo-key"</span></pre>
     </div>
@@ -318,7 +318,7 @@ $ claude mcp add --transport http employee \
     <li><code>uvicorn</code> で起動<small>（localhost:8000）</small></li>
     <li>curl で人間フロー: ログイン → 一覧 → <b>削除も OK</b></li>
     <li>curl で AI の合鍵: 一覧は OK → <b>削除は 403</b></li>
-    <li>Claude から会話で操作<small>（「社員一覧見せて」→ list_employees）</small></li>
+    <li>Claude から会話で操作<small>（「ユーザー一覧見せて」→ list_users）</small></li>
   </ul>
   <p class="note">Claude に「2 番を削除して」と頼むと、削除の道具を持っていないので<b>断ってくる</b> — ここが見せ場。</p>
 </section>
