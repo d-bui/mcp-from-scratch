@@ -101,7 +101,7 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
 
 <!-- 1. Title -->
 <section class="slide active" id="s1">
-  <div class="kicker">勉強会 ／ デモ紹介</div>
+  <div class="kicker">勉強会 ／ 実装ハンズオン</div>
   <h1>MCP サーバーを作る<br><small style="font-size:.45em;color:var(--muted)">― 何を組み立てればいいか、小さなデモで見ていく</small></h1>
   <div class="pill-row">
     <span class="pill">① 土台の API サーバー</span>
@@ -115,12 +115,11 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
 
 <!-- 1b. what is mcp: toolbox -->
 <section class="slide">
-  <div class="eyebrow">そもそも</div>
-  <h2>MCP サーバー = AI に渡す「道具箱」</h2>
+  <div class="eyebrow">はじめに</div>
+  <h2>MCP サーバー = AI に渡す「道具箱」＋「説明書」</h2>
   <ul class="pts">
-    <li>道具（ツール）1 つ = AI にさせたいこと 1 つ<br><small>それぞれに「名前・説明文・入力の形」が付いている</small></li>
-    <li>AI は<b>説明文を読んで</b>、どの道具をいつ使うか自分で決める</li>
-    <li>道具を渡していない操作は、AI は<b>そもそもできない</b><small>（今日の話の出発点）</small></li>
+    <li>道具（ツール）1 つ = AI にさせたいこと 1 つ<br><small>名前・説明文・入力の形が付いていて、AI は説明文を読んで使い方を決める</small></li>
+    <li>道具を渡していない操作は、AI は<b>そもそもできない</b><small>（今日もここが軸）</small></li>
   </ul>
   <div class="pill-row" style="margin-top:2.2vh">
     <span class="pill">一覧を見る <code>list_users</code></span>
@@ -129,7 +128,7 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
     <span class="pill">できることを聞く <code>list_agent_apis</code></span>
     <span class="pill">自己紹介 <code>server_info</code></span>
   </div>
-  <p class="note">今日のデモの道具箱はこの 5 つ（削除の道具はわざと入れない）。<b>この道具箱を作って AI に渡す係</b>が、これから作る MCP サーバー。</p>
+  <p class="note">今日は<b>この 5 つ入りの道具箱を実際に作って動かす</b>（削除の道具はわざと入れない）。</p>
 </section>
 
 <!-- 2. Zentaizou -->
@@ -247,7 +246,7 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
   <span class="k">return</span> AGENT_KEYS.includes(token) ? { key: token } : <span class="k">null</span>;
 }</pre>
   </div>
-  <p class="note">この合鍵を持つのは道具箱（MCP）。<b>AI が道具を使うたび、道具箱がこの合鍵を見せて API を呼ぶ</b>。入口を分けておくと「AI の鍵だけ止める」「AI の利用だけ記録する」が簡単にできる。</p>
+  <p class="note">この合鍵を持つのは道具箱（MCP）。<b>AI が道具を使うたび、道具箱がこの合鍵を見せて API を呼ぶ</b>。PAT（事前発行キー）方式は、コードにするとこの数行。</p>
 </section>
 
 <!-- 6. actor middleware -->
@@ -344,9 +343,9 @@ app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
   <div class="two">
     <div>
       <ul class="pts">
-        <li><b>API サーバー</b> → Docker でサーバーに置く<br><small>みんなで 1 つを使う</small></li>
-        <li><b>説明係（MCP）</b> → <code>.mcpb</code> という 1 ファイルを配る<br><small>各自の Claude にダブルクリックで入る。難しい設定は不要</small></li>
-        <li>鍵はインストール時に 1 回入力するだけ<br><small>PC の安全な場所（キーチェーン）に保存される</small></li>
+        <li><b>API サーバー</b> → Docker でサーバーに置く<br><small>みんなで 1 つを使う（実務なら ECS 等）</small></li>
+        <li><b>説明係（MCP）</b> → <code>.mcpb</code> 1 ファイルで配る<br><small>中身は manifest.json + コードを zip しただけ。ダブルクリックで Claude に入る</small></li>
+        <li>鍵の入力フォームも manifest に書くだけ<br><small>sensitive を付けると OS の安全な場所に保存される</small></li>
       </ul>
     </div>
     <div class="shot">
@@ -378,14 +377,13 @@ app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
 
 <!-- 13. lessons -->
 <section class="slide">
-  <div class="eyebrow">実運用からの学び</div>
-  <h2>本番で 65 個のツールを運用して分かったこと</h2>
+  <div class="eyebrow">作ってみて分かったこと</div>
+  <h2>今日の持ち帰り <small>― 実装して初めて見えたこと</small></h2>
   <ul class="pts">
-    <li>説明係（MCP）に権限を持たせない — <b>壊れても事故にならない</b></li>
-    <li>人間と AI の入口を分ける — 止める・記録する・制限するを<b>別々にできる</b></li>
-    <li>AI に許すことはリストで管理 — ざっくり開放は事故のもと</li>
-    <li>エラーは「理由つき」で返す — AI が読んで<b>自分でやり直せる</b></li>
-    <li>AI の動きはコードより<b>「説明文」で決まる</b> — 書き方が一番効く</li>
+    <li>土台がふつうの Web アプリなら、<b>AI 対応（②〜④）は後付けできる</b><br><small>既存システムにも同じ手順で足せる</small></li>
+    <li>リスト（③）と道具箱（④）を<b>同じ名前で揃える</b> — それがそのまま AI 向けの仕様書になる</li>
+    <li>テストは<b>「AI の代わりのクライアント」</b>で自動化できる<br><small>今日のデモ: 12 項目を 1 コマンドで検証（npm test）</small></li>
+    <li>落とし穴: stdio サーバーで <code>console.log</code> すると通信が壊れる<br><small>ログは console.error へ</small></li>
   </ul>
 </section>
 
