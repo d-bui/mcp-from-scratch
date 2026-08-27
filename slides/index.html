@@ -139,7 +139,7 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
   <div class="diagram">
     <div class="dcol" style="flex:1">
       <div class="dbox human"><span class="t">人間</span><br><span class="d">ログインして入館証（トークン）をもらう</span></div>
-      <div class="dbox mcp"><span class="t">AI（Claude）</span><br><span class="d">合鍵（アクセスキー）で入る。説明係（MCP）を連れている</span></div>
+      <div class="dbox mcp"><span class="t">AI（Claude）</span><br><span class="d">さっきの道具箱（MCP）を持っている。入るときは合鍵で</span></div>
     </div>
     <div class="arrowcol"><span>⟶</span><span>⟶</span></div>
     <div class="stack" style="flex:1.3">
@@ -150,7 +150,7 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
       <div class="dbox"><span class="t">保管係</span> <span class="d">データを保存する</span></div>
     </div>
   </div>
-  <p class="note">この絵を 5 つの部品に分けて、<b>「土台 → 入口 → リスト → 説明係 → 配り方」</b>の順に作っていく。大事な決めごとは 2 つ: 「誰が来たか」は受付が、「AI に何を許すか」はリストが決める。</p>
+  <p class="note">AI が道具を 1 つ使うたび、お願いが 1 回右の中身へ飛ぶ。この絵を 5 つの部品に分けて、<b>「土台 → 入口 → リスト → 説明係 → 配り方」</b>の順に作っていく。</p>
 </section>
 
 <!-- 3. Layer ichiran -->
@@ -159,23 +159,24 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
   <h2>作ると全部で 7 つの係になる <small>― 1 つの係 = 1 つのファイル</small></h2>
   <div class="tblwrap">
   <table>
-    <tr><th>係</th><th>ファイル</th><th>やること（一言で）</th></tr>
-    <tr><td>受付（人間用）</td><td><code>api/auth/userAuth.mjs</code></td><td>ログイン → 入館証を発行。「人間だけ」の扉も守る</td></tr>
-    <tr><td>受付（AI 用）</td><td><code>api/auth/agentAuth.mjs</code></td><td>事前に渡してある合鍵（アクセスキー）を確認する</td></tr>
-    <tr><td>やっていいことリスト</td><td><code>api/agentRegistry.mjs</code></td><td>ここに書いた API だけ AI が使える</td></tr>
-    <tr><td>窓口</td><td><code>api/usersController.mjs</code></td><td>お願いを受けて、返事を返す</td></tr>
-    <tr><td>ルール係</td><td><code>api/usersService.mjs</code></td><td>入力チェックや「email 重複はダメ」などのルール担当</td></tr>
-    <tr><td>保管係</td><td><code>api/usersRepository.mjs</code></td><td>データを保存するだけ（今回は勉強用にメモリ保存）</td></tr>
-    <tr><td>AI への説明係</td><td><code>mcp/index.mjs</code></td><td>API の使い方を AI に日本語で教えながら取り次ぐ</td></tr>
+    <tr><th>作るもの</th><th>係</th><th>ファイル</th><th>やること（一言で）</th></tr>
+    <tr><td>①</td><td>窓口</td><td><code>api/usersController.mjs</code></td><td>お願いを受けて、返事を返す</td></tr>
+    <tr><td>①</td><td>ルール係</td><td><code>api/usersService.mjs</code></td><td>入力チェックや「email 重複はダメ」などのルール担当</td></tr>
+    <tr><td>①</td><td>保管係</td><td><code>api/usersRepository.mjs</code></td><td>データを保存するだけ（今回は勉強用にメモリ保存）</td></tr>
+    <tr><td>②</td><td>受付（人間用）</td><td><code>api/auth/userAuth.mjs</code></td><td>ログイン → 入館証を発行。「人間だけ」の扉も守る</td></tr>
+    <tr><td>②</td><td>受付（AI 用）</td><td><code>api/auth/agentAuth.mjs</code></td><td>事前に渡してある合鍵（アクセスキー）を確認する</td></tr>
+    <tr><td>③</td><td>やっていいことリスト</td><td><code>api/agentRegistry.mjs</code></td><td>ここに書いた API だけ AI が使える</td></tr>
+    <tr><td>④</td><td>AI への説明係</td><td><code>mcp/index.mjs</code></td><td>道具箱の中身。API の使い方を AI に教えながら取り次ぐ</td></tr>
   </table>
   </div>
-  <p class="note">係を分けておくと、「AI まわりを変えたい」ときに<b>どのファイルを触ればいいかがすぐ分かる</b>。</p>
+  <p class="note">⑤（配る仕組み）だけはファイルではなく届け方（Docker と .mcpb）。係を分けておくと、「AI まわりを変えたい」ときに<b>どのファイルを触ればいいかがすぐ分かる</b>。</p>
 </section>
 
 <!-- 4. api body (build 1) -->
 <section class="slide">
   <div class="eyebrow">作るもの① まず、ふつうの API サーバー</div>
   <h2>土台を作る <small>― 「ユーザー追加」が 3 つの係を通る</small></h2>
+  <p class="note" style="margin-top:0;margin-bottom:1.4vh">ここまでは AI と無関係の、ふつうの Web アプリ。<b>この土台に AI のための部品（②〜④）を足していく</b>。</p>
   <div class="chain">
     <div>
       <div class="lbl">窓口 ― 受けて、渡して、返事するだけ</div>
@@ -246,7 +247,7 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
   <span class="k">return</span> AGENT_KEYS.includes(token) ? { key: token } : <span class="k">null</span>;
 }</pre>
   </div>
-  <p class="note">入口を分けておくと、<b>「AI の鍵だけ止める」「AI の利用だけ記録する」</b>が簡単にできる。</p>
+  <p class="note">この合鍵を持つのは道具箱（MCP）。<b>AI が道具を使うたび、道具箱がこの合鍵を見せて API を呼ぶ</b>。入口を分けておくと「AI の鍵だけ止める」「AI の利用だけ記録する」が簡単にできる。</p>
 </section>
 
 <!-- 6. actor middleware -->
@@ -292,7 +293,7 @@ app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
   <span class="k">return</span> res.status(<span class="s">403</span>).json({ <span class="c">/* 「AI には開放していません」 */</span> });
 };</pre>
   </div>
-  <p class="note">「この辺は全部 OK」とざっくり開けると、<b>開けたくないものまで開いてしまう事故</b>が起きる（実体験）。1 個ずつ書く方式なら、この表を見るだけで「AI にできること」が全部わかる。</p>
+  <p class="note">よく見ると、<b>このリストは道具箱の道具と同じ名前</b>（道具 create_user → リストの create_user）。「この辺は全部 OK」とざっくり開けると<b>開けたくないものまで開く事故</b>が起きる（実体験）— 1 個ずつ書けば、この表 = 道具箱の中身、と揃う。</p>
 </section>
 
 <!-- 8. permission matrix -->
@@ -333,7 +334,7 @@ app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
 <span class="c">//  「ID は推測しないで、必ず一覧で確認してから」</span>
 <span class="c">//  「削除を頼まれたら、管理画面を案内して」</span></pre>
   </div>
-  <p class="note">この説明文がそのまま <b>AI への指示書</b>になる — こう書いておくと AI がその通りに動く。説明係は API を呼ぶだけで、<b>特別な権限は持っていない</b>。</p>
+  <p class="note">道具の名前はリスト（③）と同じにしてある — 道具 create_user はリストの create_user を呼ぶ。説明文がそのまま <b>AI への指示書</b>になり、説明係自身は API を呼ぶだけで<b>特別な権限は持っていない</b>。</p>
 </section>
 
 <!-- 11. deploy -->
