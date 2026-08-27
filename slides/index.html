@@ -24,7 +24,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--fg); overfl
 .slide.active { display: flex; opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .slide, #progress { transition: none; } }
 
-.eyebrow { color: var(--accent2); font-weight: 700; letter-spacing: .18em; font-size: clamp(.7rem, 1.3vw, .95rem); margin-bottom: 1.6vh; text-transform: uppercase; }
+.eyebrow { color: var(--accent2); font-weight: 700; letter-spacing: .18em; font-size: clamp(.7rem, 1.3vw, .95rem); margin-bottom: 1.6vh; }
 h1 { font-size: clamp(2rem, 5vw, 3.8rem); line-height: 1.25; text-wrap: balance; }
 h2 { font-size: clamp(1.4rem, 3.2vw, 2.4rem); margin-bottom: 2.2vh; color: #fff; text-wrap: balance; }
 h2 small { color: var(--muted); font-weight: 500; font-size: .55em; }
@@ -100,65 +100,65 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
 <div class="foot-hint">← → キーで移動</div>
 
 <!-- 1. Title -->
-<section class="slide active">
-  <div class="kicker">勉強会 ／ ハンズオン解説</div>
-  <h1>人間と AI が<br>同じ API を使う<br><small style="font-size:.45em;color:var(--muted)">― レイヤーで見る users-mcp-demo</small></h1>
+<section class="slide active" id="s1">
+  <div class="kicker">勉強会 ／ デモ紹介</div>
+  <h1>人間と AI が<br>同じ API を使う<br><small style="font-size:.45em;color:var(--muted)">― 小さなデモで仕組みを見る</small></h1>
   <div class="pill-row">
-    <span class="pill">Node.js / Express</span>
-    <span class="pill">認証 2 系統</span>
-    <span class="pill">公開レジストリ</span>
-    <span class="pill">MCP サーバー</span>
-    <span class="pill">.mcpb 配布</span>
+    <span class="pill">API サーバー</span>
+    <span class="pill">受付（人間用と AI 用）</span>
+    <span class="pill">AI がやっていいことリスト</span>
+    <span class="pill">AI への説明係（MCP）</span>
   </div>
-  <div class="author">発表者：ミズン ／ コードは共有リポジトリ参照</div>
+  <div class="author">発表者：ミズン ／ コードは GitHub で共有します</div>
 </section>
 
 <!-- 2. Zentaizou -->
 <section class="slide">
   <div class="eyebrow">全体像</div>
-  <h2>入口は 2 つ、中身は 1 つ <small>― 同じ API を別々の認証で</small></h2>
+  <h2>入口は 2 つ、中身は 1 つ <small>― 同じサーバーを人間と AI が使う</small></h2>
   <div class="diagram">
     <div class="dcol" style="flex:1">
-      <div class="dbox human"><span class="t">人間ユーザー</span><br><span class="d">ログイン → セッショントークン</span></div>
-      <div class="dbox mcp"><span class="t">AI（Claude）+ MCP サーバー</span><br><span class="d">PAT（事前発行キー）／ .mcpb で配布</span></div>
+      <div class="dbox human"><span class="t">人間</span><br><span class="d">ログインして入館証（トークン）をもらう</span></div>
+      <div class="dbox mcp"><span class="t">AI（Claude）</span><br><span class="d">合鍵（アクセスキー）で入る。説明係（MCP）を連れている</span></div>
     </div>
     <div class="arrowcol"><span>⟶</span><span>⟶</span></div>
     <div class="stack" style="flex:1.3">
-      <div class="dbox human"><span class="t">認証層（2 系統）</span> <span class="d">userAuth / agentAuth → actor 確定</span></div>
-      <div class="dbox reg"><span class="t">公開レジストリ</span> <span class="d">AI に開放する API の登録リスト</span></div>
-      <div class="dbox"><span class="t">controller</span> <span class="d">HTTP ⇄ サービス変換 + ガード宣言</span></div>
-      <div class="dbox"><span class="t">service</span> <span class="d">業務ルール（HTTP を知らない）</span></div>
-      <div class="dbox"><span class="t">repository</span> <span class="d">データ保存（デモはメモリ）</span></div>
+      <div class="dbox human"><span class="t">受付ゾーン</span> <span class="d">来たのが人間か AI かをここで見分ける</span></div>
+      <div class="dbox reg"><span class="t">AI がやっていいことリスト</span> <span class="d">AI に許す操作はここに書いたものだけ</span></div>
+      <div class="dbox"><span class="t">窓口</span> <span class="d">お願いを受けて、返事を返す</span></div>
+      <div class="dbox"><span class="t">ルール係</span> <span class="d">入力チェック・重複チェック</span></div>
+      <div class="dbox"><span class="t">保管係</span> <span class="d">データを保存する</span></div>
     </div>
   </div>
-  <p class="note">API は 1 セットだけ。<b>「誰が呼んでいるか」を認証層が確定</b>し、<b>「AI に何を許すか」をレジストリが決める</b>。</p>
+  <p class="note">ポイントは 2 つだけ。<b>「誰が来たか」は受付が決める</b>。<b>「AI に何を許すか」はリストが決める</b>。</p>
 </section>
 
 <!-- 3. Layer ichiran -->
 <section class="slide">
-  <div class="eyebrow">レイヤー一覧</div>
-  <h2>各層は 1 ファイル、責務は 1 つ</h2>
+  <div class="eyebrow">役割分担</div>
+  <h2>7 つの係に分けた <small>― 1 つの係 = 1 つのファイル</small></h2>
   <div class="tblwrap">
   <table>
-    <tr><th>層</th><th>ファイル</th><th>責務</th></tr>
-    <tr><td>認証（人間）</td><td><code>api/auth/userAuth.mjs</code></td><td>ログイン → セッション発行、<code>userOnly</code> ガード</td></tr>
-    <tr><td>認証（AI）</td><td><code>api/auth/agentAuth.mjs</code></td><td>PAT 検証（ログイン不要・別系統）</td></tr>
-    <tr><td>公開レジストリ</td><td><code>api/agentRegistry.mjs</code></td><td>AI に開放する API の登録リスト + <code>forAgent</code> ガード</td></tr>
-    <tr><td>コントローラ</td><td><code>api/usersController.mjs</code></td><td>HTTP ⇄ サービス変換、ルートごとにガードを宣言</td></tr>
-    <tr><td>サービス</td><td><code>api/usersService.mjs</code></td><td>業務ルール。HTTP も「呼び出し元が誰か」も知らない</td></tr>
-    <tr><td>リポジトリ</td><td><code>api/usersRepository.mjs</code></td><td>データ保存だけ（メモリ → 実務は MySQL 等に差し替え）</td></tr>
-    <tr><td>MCP（API 説明層）</td><td><code>mcp/index.mjs</code></td><td>AI に API の使い方を説明しながら仲介。権限は持たない</td></tr>
+    <tr><th>係</th><th>ファイル</th><th>やること（一言で）</th></tr>
+    <tr><td>受付（人間用）</td><td><code>api/auth/userAuth.mjs</code></td><td>ログイン → 入館証を発行。「人間だけ」の扉も守る</td></tr>
+    <tr><td>受付（AI 用）</td><td><code>api/auth/agentAuth.mjs</code></td><td>事前に渡してある合鍵（アクセスキー）を確認する</td></tr>
+    <tr><td>やっていいことリスト</td><td><code>api/agentRegistry.mjs</code></td><td>ここに書いた API だけ AI が使える</td></tr>
+    <tr><td>窓口</td><td><code>api/usersController.mjs</code></td><td>お願いを受けて、返事を返す</td></tr>
+    <tr><td>ルール係</td><td><code>api/usersService.mjs</code></td><td>入力チェックや「email 重複はダメ」などのルール担当</td></tr>
+    <tr><td>保管係</td><td><code>api/usersRepository.mjs</code></td><td>データを保存するだけ（今回は勉強用にメモリ保存）</td></tr>
+    <tr><td>AI への説明係</td><td><code>mcp/index.mjs</code></td><td>API の使い方を AI に日本語で教えながら取り次ぐ</td></tr>
   </table>
   </div>
+  <p class="note">係を分けておくと、「AI まわりを変えたい」ときに<b>どのファイルを触ればいいかがすぐ分かる</b>。</p>
 </section>
 
 <!-- 4. userAuth -->
 <section class="slide">
-  <div class="eyebrow">認証層 ①</div>
-  <h2>人間ユーザー <small>― ログインしてセッショントークン</small></h2>
+  <div class="eyebrow">受付ゾーン ①</div>
+  <h2>人間の入口 <small>― ログインして入館証をもらう</small></h2>
   <div class="shot">
     <div class="file"><span class="dot"></span>api/auth/userAuth.mjs</div>
-    <pre><span class="c">// ログイン成功 → セッショントークン（usr_ プレフィックス）を発行</span>
+    <pre><span class="c">// ログイン成功 → 入館証（usr_ で始まるトークン）を発行</span>
 <span class="k">export function</span> <span class="fn">login</span>(login_id, password) {
   <span class="k">const</span> found = LOGIN_USERS.find((u) =&gt;
     u.login_id === login_id &amp;&amp; u.password === password);
@@ -168,27 +168,27 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
   <span class="k">return</span> token;
 }
 
-<span class="c">// ガード:「人間ユーザー専用」API に付ける（更新・削除など）</span>
+<span class="c">// 「人間だけ」の扉。AI が来たら断る（削除・更新など）</span>
 <span class="k">export function</span> <span class="fn">userOnly</span>(req, res, next) {
   <span class="k">if</span> (req.actor?.type === <span class="s">"user"</span>) <span class="k">return</span> next();
-  <span class="k">return</span> res.status(<span class="s">403</span>).json({ <span class="c">/* code: "user_only" */</span> });
+  <span class="k">return</span> res.status(<span class="s">403</span>).json({ <span class="c">/* 「人間専用です」 */</span> });
 }</pre>
   </div>
-  <p class="note">実務では JWT + httpOnly Cookie（spx は JWT 30 日 Cookie）。デモはメモリの Map で最小構成。</p>
+  <p class="note">いつもの Web サービスと同じ流れ。今回は勉強用に一番シンプルな形にしてある（本番では Cookie などを使う）。</p>
 </section>
 
 <!-- 5. agentAuth -->
 <section class="slide">
-  <div class="eyebrow">認証層 ②</div>
-  <h2>AI エージェント <small>― ログインではなく事前発行キー（PAT）</small></h2>
+  <div class="eyebrow">受付ゾーン ②</div>
+  <h2>AI の入口 <small>― ログインなし。合鍵（アクセスキー）で入る</small></h2>
   <div class="shot">
     <div class="file"><span class="dot"></span>api/auth/agentAuth.mjs</div>
-    <pre><span class="c">// 人間のログインとは完全に別系統。セッションを持たない。</span>
-<span class="c">// デモは env から読むが、実務では DB に保存する:</span>
-<span class="c">//   - 管理者ごとに発行し、ハッシュ化して api_keys テーブルへ</span>
-<span class="c">//     （平文は発行時に一度だけ表示）</span>
-<span class="c">//   - トークン → 所有者を引けるので監査ログに残せる</span>
-<span class="c">//   - 無効化・ローテーションが DB の 1 レコード操作でできる</span>
+    <pre><span class="c">// AI は人間と別の入口から入る。ログインではなく、</span>
+<span class="c">// 事前に渡してある合鍵（アクセスキー）を見せてもらう方式。</span>
+<span class="c">//</span>
+<span class="c">// 本番では鍵を DB に保存する:</span>
+<span class="c">//   - 1 人ずつ発行できる（誰の鍵か分かる → 記録が残せる）</span>
+<span class="c">//   - 使わせたくなくなったら、その鍵だけ止められる</span>
 <span class="k">const</span> AGENT_KEYS = (process.env.AGENT_API_KEYS ?? <span class="s">"agent-demo-key"</span>)
   .split(<span class="s">","</span>).map((s) =&gt; s.trim()).filter(Boolean);
 
@@ -196,94 +196,94 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
   <span class="k">return</span> AGENT_KEYS.includes(token) ? { key: token } : <span class="k">null</span>;
 }</pre>
   </div>
-  <p class="note">別系統にする理由: <b>失効・監査・レート制限を人間と別に設計できる</b>。キー 1 本で「どの AI 接続か」まで追える。</p>
+  <p class="note">入口を分けておくと、<b>「AI の鍵だけ止める」「AI の利用だけ記録する」</b>が簡単にできる。</p>
 </section>
 
 <!-- 6. actor middleware -->
 <section class="slide">
-  <div class="eyebrow">認証層 ③</div>
-  <h2>入口で「誰か」を確定する <small>― actor 判定ミドルウェア</small></h2>
+  <div class="eyebrow">受付ゾーン ③</div>
+  <h2>入口で「人間か AI か」を見分ける</h2>
   <div class="shot">
     <div class="file"><span class="dot"></span>api/server.mjs</div>
-    <pre><span class="c">// Bearer トークンを見て actor（誰が呼んでいるか）を確定する</span>
+    <pre><span class="c">// 見せられたトークンを確認して、「誰が来たか」を決める</span>
 app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
   <span class="k">const</span> token = (req.headers.authorization ?? <span class="s">""</span>)
     .replace(<span class="s">/^Bearer\s+/i</span>, <span class="s">""</span>);
 
-  <span class="k">const</span> session = resolveUserToken(token);      <span class="c">// ① 人間？</span>
+  <span class="k">const</span> session = resolveUserToken(token);      <span class="c">// ① 入館証？ → 人間</span>
 <span class="hl">  <span class="k">if</span> (session) { req.actor = { type: <span class="s">"user"</span>, name: session.name }; <span class="k">return</span> next(); }</span>
 
-  <span class="k">const</span> agent = resolveAgentToken(token);       <span class="c">// ② AI？</span>
+  <span class="k">const</span> agent = resolveAgentToken(token);       <span class="c">// ② 合鍵？ → AI</span>
 <span class="hl">  <span class="k">if</span> (agent) { req.actor = { type: <span class="s">"agent"</span> }; <span class="k">return</span> next(); }</span>
 
-  res.status(<span class="s">401</span>).json({ <span class="c">/* code: "unauthorized" */</span> }); <span class="c">// ③ 拒否</span>
+  res.status(<span class="s">401</span>).json({ <span class="c">/* どちらでもない → お断り */</span> });
 });</pre>
   </div>
-  <p class="note">以降の全ルートは <code>req.actor.type</code>（"user" | "agent"）だけを見ればいい。<b>判定は 1 箇所</b>。</p>
+  <p class="note">見分けるのは<b>入口の 1 箇所だけ</b>。後ろの係たちは「人間か AI か」の結果を使うだけでいい。</p>
 </section>
 
 <!-- 7. registry -->
 <section class="slide">
-  <div class="eyebrow">公開レジストリ（このデモの肝）</div>
-  <h2>AI に許す API は「明示的な登録制」</h2>
+  <div class="eyebrow">今日いちばん大事なところ</div>
+  <h2>AI に許す操作は「リストに書いたものだけ」</h2>
   <div class="shot">
     <div class="file"><span class="dot"></span>api/agentRegistry.mjs</div>
-    <pre><span class="c">// ここに登録された API だけが AI エージェントから呼べる</span>
+    <pre><span class="c">// AI がやっていいことリスト。ここに書いた API だけ AI が使える</span>
 <span class="k">export const</span> AGENT_APIS = [
   { name: <span class="s">"list_users"</span>,  method: <span class="s">"GET"</span>,  path: <span class="s">"/api/users"</span> },
   { name: <span class="s">"get_user"</span>,    method: <span class="s">"GET"</span>,  path: <span class="s">"/api/users/:id"</span> },
   { name: <span class="s">"create_user"</span>, method: <span class="s">"POST"</span>, path: <span class="s">"/api/users"</span> },
-<span class="hl">  <span class="c">// update / delete は意図的に登録しない = 破壊的操作は人間専用</span></span>
+<span class="hl">  <span class="c">// 削除・更新はわざと書かない = 人間にしかさせない</span></span>
 ];
 
 <span class="k">export const</span> <span class="fn">forAgent</span> = (name) =&gt; (req, res, next) =&gt; {
-  <span class="k">if</span> (req.actor?.type === <span class="s">"user"</span>) <span class="k">return</span> next();  <span class="c">// 人間は常に OK</span>
+  <span class="k">if</span> (req.actor?.type === <span class="s">"user"</span>) <span class="k">return</span> next();  <span class="c">// 人間はいつでも OK</span>
   <span class="k">if</span> (AGENT_APIS.some((a) =&gt; a.name === name)) <span class="k">return</span> next();
-  <span class="k">return</span> res.status(<span class="s">403</span>).json({ <span class="c">/* code: "agent_not_allowed" */</span> });
+  <span class="k">return</span> res.status(<span class="s">403</span>).json({ <span class="c">/* 「AI には開放していません」 */</span> });
 };</pre>
   </div>
-  <p class="note">パスのプレフィックスで開放すると<b>隣のセンシティブな API まで開く事故</b>が起きる（実運用のヒヤリ経験）。1 本ずつの登録制なら、この表がそのまま <b>AI 向け API 仕様書</b>になる。</p>
+  <p class="note">「この辺は全部 OK」とざっくり開けると、<b>開けたくないものまで開いてしまう事故</b>が起きる（実体験）。1 個ずつ書く方式なら、この表を見るだけで「AI にできること」が全部わかる。</p>
 </section>
 
 <!-- 8. permission matrix -->
 <section class="slide">
   <div class="eyebrow">結果</div>
-  <h2>権限マトリクス <small>― 同じ API、違う権限</small></h2>
+  <h2>同じ API でも、できることが違う</h2>
   <div class="tblwrap">
   <table>
-    <tr><th>API</th><th>人間ユーザー</th><th>AI エージェント</th></tr>
-    <tr><td>GET <code>/api/users</code>（一覧）</td><td class="yes">✔</td><td class="yes">✔ 登録済み</td></tr>
-    <tr><td>GET <code>/api/users/:id</code>（取得）</td><td class="yes">✔</td><td class="yes">✔ 登録済み</td></tr>
-    <tr><td>POST <code>/api/users</code>（作成）</td><td class="yes">✔</td><td class="yes">✔ 登録済み</td></tr>
-    <tr><td>PUT <code>/api/users/:id</code>（更新）</td><td class="yes">✔</td><td class="no2">✘ user_only</td></tr>
-    <tr><td>DELETE <code>/api/users/:id</code>（削除）</td><td class="yes">✔</td><td class="no2">✘ user_only</td></tr>
-    <tr><td>GET <code>/api/agent/apis</code>（公開一覧）</td><td class="yes">✔</td><td class="yes">✔ 登録済み</td></tr>
+    <tr><th>操作</th><th>人間</th><th>AI</th></tr>
+    <tr><td>ユーザー一覧を見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
+    <tr><td>ユーザーを 1 人見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
+    <tr><td>ユーザーを追加する</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
+    <tr><td>ユーザーを更新する</td><td class="yes">✔</td><td class="no2">✘ 人間専用</td></tr>
+    <tr><td>ユーザーを削除する</td><td class="yes">✔</td><td class="no2">✘ 人間専用</td></tr>
+    <tr><td>「AI にできること」の一覧を見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
   </table>
   </div>
-  <p class="note">エラーコードも 2 種類: <code>user_only</code> = 人間専用ガード付き、<code>agent_not_allowed</code> = レジストリ未登録。<b>AI は自分の使える一覧を自分で取得できる</b>（/agent/apis）。</p>
+  <p class="note">削除・更新はリストに書いていないので、AI は頼まれてもできない。しかも AI は<b>「自分に何ができるか」を自分で確認できる</b>（一番下の API）。</p>
 </section>
 
 <!-- 9. controller/service/repository -->
 <section class="slide">
-  <div class="eyebrow">3 層の分離</div>
-  <h2>1 リクエストが 3 層を通る <small>― POST /api/users の例</small></h2>
+  <div class="eyebrow">API サーバーの中身</div>
+  <h2>1 つのお願いが 3 つの係を通る <small>― 「ユーザー追加」の例</small></h2>
   <div class="chain">
     <div>
-      <div class="lbl">controller ― HTTP とガードだけ</div>
+      <div class="lbl">窓口 ― 受けて、渡して、返事するだけ</div>
       <div class="shot"><pre>usersRouter.post(<span class="s">"/"</span>, <span class="fn">forAgent</span>(<span class="s">"create_user"</span>),
   handle((req, res) =&gt; ok(res, usersService.create(req.body ?? {}), <span class="s">201</span>)));</pre></div>
     </div>
     <div>
-      <div class="lbl">service ― 業務ルールだけ（HTTP を知らない）</div>
+      <div class="lbl">ルール係 ― チェック担当（「email 重複はダメ」など）</div>
       <div class="shot"><pre><span class="fn">create</span>(input) {
-  validate(input);  <span class="c">// name / email / role</span>
+  validate(input);  <span class="c">// 名前・email・役割をチェック</span>
   <span class="k">if</span> (usersRepository.findByEmail(input.email))
     <span class="k">throw new</span> ServiceError(<span class="s">409</span>, <span class="s">"email_taken"</span>, <span class="s">"その email は既に使われています"</span>);
   <span class="k">return</span> usersRepository.create({ ... });
 }</pre></div>
     </div>
     <div>
-      <div class="lbl">repository ― 保存だけ（実務は MySQL に差し替え）</div>
+      <div class="lbl">保管係 ― 保存するだけ</div>
       <div class="shot"><pre><span class="fn">create</span>({ name, email, role }) {
   <span class="k">const</span> user = { id: nextId++, name, email, role };
   users.set(user.id, user);
@@ -295,50 +295,45 @@ app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
 
 <!-- 10. MCP layer -->
 <section class="slide">
-  <div class="eyebrow">MCP 層</div>
-  <h2>MCP は「API 説明層」 <small>― 説明文がそのまま AI への指示書</small></h2>
+  <div class="eyebrow">AI への説明係（MCP）</div>
+  <h2>MCP は「AI 向けの取扱説明書」つきの窓口</h2>
   <div class="shot">
     <div class="file"><span class="dot"></span>mcp/index.mjs</div>
     <pre>tool(server, <span class="s">"create_user"</span>, {
   title: <span class="s">"ユーザー作成"</span>,
 <span class="hl">  description: <span class="s">"ユーザーを新規作成する。email が既存と重複すると失敗する</span></span>
-<span class="hl"><span class="s">    （email_taken）ので、事前に list_users で確認するとよい。"</span>,</span>
+<span class="hl"><span class="s">    ので、事前に list_users で確認するとよい。"</span>,</span>
   inputSchema: {
     name:  z.string().min(<span class="s">1</span>).describe(<span class="s">"氏名"</span>),
     email: z.string().describe(<span class="s">"メールアドレス（重複不可）"</span>),
   },
-}, <span class="k">async</span> ({ name, email, role }) =&gt;
-  ok(<span class="k">await</span> api(<span class="s">"POST"</span>, <span class="s">"/users"</span>, { name, email, role })));
+}, ...);
 
-<span class="c">// 接続時に渡す運用ルール（instructions）:</span>
-<span class="c">//  「ID は推測せず必ず list_users で解決」</span>
-<span class="c">//  「更新・削除はできない → 管理画面を案内」</span></pre>
+<span class="c">// つないだ瞬間に AI へ渡す「お約束」も文章で書く:</span>
+<span class="c">//  「ID は推測しないで、必ず一覧で確認してから」</span>
+<span class="c">//  「削除を頼まれたら、管理画面を案内して」</span></pre>
   </div>
-  <p class="note">MCP 層は <b>DB に触れず、権限も持たない</b>。PAT で REST API を呼ぶだけ — 権限判定・バリデーションは API 側 1 箇所。<b>AI の振る舞いはコードではなく文章（description）で制御</b>する。</p>
+  <p class="note">この説明文がそのまま <b>AI への指示書</b>になる — こう書いておくと AI がその通りに動く。説明係は API を呼ぶだけで、<b>特別な権限は持っていない</b>。</p>
 </section>
 
 <!-- 11. deploy -->
 <section class="slide">
-  <div class="eyebrow">配布・デプロイ</div>
-  <h2>デプロイ単位が違う <small>― API は Docker、MCP は .mcpb</small></h2>
+  <div class="eyebrow">届け方</div>
+  <h2>置き場所が違う <small>― API はサーバーに、説明係は各自の PC に</small></h2>
   <div class="two">
     <div>
       <ul class="pts">
-        <li><b>API サーバー</b> → Docker コンテナ<br><small>サーバー側で稼働（実務なら ECS 等）</small></li>
-        <li><b>MCP サーバー</b> → <code>.mcpb</code> ファイル<br><small>利用者の PC で Claude が stdio 起動。Node 不要・ダブルクリックで導入</small></li>
-        <li>API URL とキーはインストール時の<b>フォーム入力</b><br><small>sensitive キーは OS キーチェーンに保存</small></li>
+        <li><b>API サーバー</b> → Docker でサーバーに置く<br><small>みんなで 1 つを使う</small></li>
+        <li><b>説明係（MCP）</b> → <code>.mcpb</code> という 1 ファイルを配る<br><small>各自の Claude にダブルクリックで入る。難しい設定は不要</small></li>
+        <li>鍵はインストール時に 1 回入力するだけ<br><small>PC の安全な場所（キーチェーン）に保存される</small></li>
       </ul>
     </div>
     <div class="shot">
-      <div class="file"><span class="dot"></span>manifest.json（.mcpb）</div>
-      <pre><span class="s">"server"</span>: {
-  <span class="s">"type"</span>: <span class="s">"node"</span>,
-  <span class="s">"entry_point"</span>: <span class="s">"mcp/index.mjs"</span>, ...
-},
-<span class="s">"user_config"</span>: {
+      <div class="file"><span class="dot"></span>manifest.json（.mcpb の設定）</div>
+      <pre><span class="s">"user_config"</span>: {
   <span class="s">"api_key"</span>: {
     <span class="s">"title"</span>: <span class="s">"エージェント用アクセスキー"</span>,
-<span class="hl">    <span class="s">"sensitive"</span>: <span class="k">true</span>,</span>
+<span class="hl">    <span class="s">"sensitive"</span>: <span class="k">true</span>,  <span class="c">// ← 安全に保存</span></span>
     <span class="s">"required"</span>: <span class="k">true</span>
   }
 }</pre>
@@ -349,38 +344,37 @@ app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
 <!-- 12. demo cheat sheet -->
 <section class="slide">
   <div class="eyebrow">ライブデモ</div>
-  <h2>デモ手順 <small>― この順で見せます</small></h2>
+  <h2>この順で見せます</h2>
   <ul class="pts">
-    <li><code>npm run docker</code> — API 起動<small>（localhost:3000）</small></li>
-    <li>curl で人間フロー: ログイン → 一覧 → <b>削除も OK</b></li>
-    <li>curl で AI フロー: PAT で一覧 OK → <b>削除は 403</b>（user_only）</li>
-    <li><code>npm test</code> — MCP を SDK クライアントで E2E 検証<small>（12 項目、異常系込み）</small></li>
-    <li>Claude Code / Desktop から実際に会話で操作<small>（.mcp.json / .mcpb）</small></li>
+    <li>API サーバーを起動<small>（Docker、コマンド 1 つ）</small></li>
+    <li>人間として: ログイン → 一覧 → <b>削除も OK</b></li>
+    <li>AI の鍵で: 一覧は OK → <b>削除は断られる</b></li>
+    <li>自動テスト: AI の代わりのプログラムで 12 項目を一気に確認</li>
+    <li>本物の Claude から会話で操作</li>
   </ul>
-  <p class="note">「3 番を削除して」と頼むと、AI は削除ツールを持たないので<b>管理画面を案内してくる</b> — ここが見せ場。</p>
+  <p class="note">Claude に「3 番を削除して」と頼むと、削除の道具を持っていないので<b>「管理画面からどうぞ」と案内してくる</b> — ここが見せ場。</p>
 </section>
 
 <!-- 13. lessons -->
 <section class="slide">
   <div class="eyebrow">実運用からの学び</div>
-  <h2>65 ツール運用して分かったこと <small>― spx-learning-square より</small></h2>
+  <h2>本番で 65 個のツールを運用して分かったこと</h2>
   <ul class="pts">
-    <li>MCP 層は<b>権限を持たせない</b> — 壊れても UI にできない事故は起きない</li>
-    <li>認証は<b>人間と AI で別系統</b> — 失効・監査・レート制限を独立に設計</li>
-    <li>AI への公開は<b>登録制</b> — プレフィックス開放は事故のもと</li>
-    <li>エラーは throw せず <code>isError</code> + 機械可読 code — AI が自力でリカバリーできる</li>
-    <li>stdout は JSON-RPC 専用 — <code>console.log</code> 1 行で通信が壊れる</li>
-    <li>ツールの description = <b>AI への指示書</b> — 挙動は文章で制御する</li>
+    <li>説明係（MCP）に権限を持たせない — <b>壊れても事故にならない</b></li>
+    <li>人間と AI の入口を分ける — 止める・記録する・制限するを<b>別々にできる</b></li>
+    <li>AI に許すことはリストで管理 — ざっくり開放は事故のもと</li>
+    <li>エラーは「理由つき」で返す — AI が読んで<b>自分でやり直せる</b></li>
+    <li>AI の動きはコードより<b>「説明文」で決まる</b> — 書き方が一番効く</li>
   </ul>
 </section>
 
 <!-- 14. end -->
 <section class="slide">
   <div class="eyebrow">まとめ</div>
-  <h2>同じ API・別々の入口・明示的な公開範囲</h2>
+  <h2>入口は分ける・許可はリストで・説明は文章で</h2>
   <ul class="pts">
-    <li>層を分けたから、<b>「AI に何を許すか」が 1 ファイルで見える</b></li>
-    <li>コードは共有リポジトリの <code>mcp-from-scratch/</code> を参照<small>（README に手順あり）</small></li>
+    <li>係を分けたので、「AI に何を許すか」が<b>ファイル 1 つでわかる</b></li>
+    <li>コード: <code>github.com/d-bui/mcp-from-scratch</code><small>（README に動かし方あり）</small></li>
     <li>質問どうぞ！</li>
   </ul>
 </section>
