@@ -1,12 +1,9 @@
 {
   "mcpServers": {
-    "users-demo": {
-      "command": "node",
-      "args": ["mcp/index.mjs"],
-      "env": {
-        "DEMO_API_URL": "http://localhost:3000/api",
-        "DEMO_API_KEY": "agent-demo-key"
-      }
+    "employee": {
+      "type": "http",
+      "url": "http://localhost:8000/mcp",
+      "headers": { "Authorization": "Bearer agent-demo-key" }
     }
   }
 }

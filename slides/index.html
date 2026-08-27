@@ -72,11 +72,6 @@ td code { font-size: .82em; }
 .yes { color: var(--ok); font-weight: 700; }
 .no2 { color: var(--no); font-weight: 700; }
 
-/* ---- 3-mini shots row ---- */
-.chain { display: flex; flex-direction: column; gap: 1.4vh; }
-.chain .shot pre { font-size: clamp(.62rem, 1.35vw, .92rem); padding: .7em 1.1em; }
-.chain .lbl { font-size: clamp(.75rem, 1.4vw, 1rem); color: var(--accent2); font-weight: 700; margin-bottom: .4vh; }
-
 /* ---- title slide ---- */
 #s1 { background:
   radial-gradient(1200px 600px at 80% -10%, rgba(129,140,248,.22), transparent),
@@ -102,18 +97,18 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
 <!-- 1. Title -->
 <section class="slide active" id="s1">
   <div class="kicker">勉強会 ／ 実装ハンズオン</div>
-  <h1>MCP サーバーを作る<br><small style="font-size:.45em;color:var(--muted)">― 何を組み立てればいいか、小さなデモで見ていく</small></h1>
+  <h1>MCP サーバーを作る<br><small style="font-size:.45em;color:var(--muted)">― FastAPI で 1 ファイル、5 つの部品を組み立てる</small></h1>
   <div class="pill-row">
-    <span class="pill">① 土台の API サーバー</span>
+    <span class="pill">① 土台の API</span>
     <span class="pill">② 入口（受付）</span>
     <span class="pill">③ やっていいことリスト</span>
-    <span class="pill">④ AI への説明係</span>
-    <span class="pill">⑤ 配る仕組み</span>
+    <span class="pill">④ AI への説明係（自動）</span>
+    <span class="pill">⑤ つなぎ方</span>
   </div>
   <div class="author">発表者：ミズン ／ コードは GitHub で共有します</div>
 </section>
 
-<!-- 1b. what is mcp: toolbox -->
+<!-- 2. what is mcp: toolbox -->
 <section class="slide">
   <div class="eyebrow">はじめに</div>
   <h2>MCP サーバー = AI に渡す「道具箱」＋「説明書」</h2>
@@ -122,241 +117,195 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
     <li>道具を渡していない操作は、AI は<b>そもそもできない</b><small>（今日もここが軸）</small></li>
   </ul>
   <div class="pill-row" style="margin-top:2.2vh">
-    <span class="pill">一覧を見る <code>list_users</code></span>
-    <span class="pill">1 人を見る <code>get_user</code></span>
-    <span class="pill">追加する <code>create_user</code></span>
-    <span class="pill">できることを聞く <code>list_agent_apis</code></span>
-    <span class="pill">自己紹介 <code>server_info</code></span>
+    <span class="pill">一覧を見る <code>list_employees</code></span>
+    <span class="pill">1 人を見る <code>get_employee</code></span>
+    <span class="pill">追加する <code>create_employee</code></span>
   </div>
-  <p class="note">今日は<b>この 5 つ入りの道具箱を実際に作って動かす</b>（削除の道具はわざと入れない）。</p>
+  <p class="note">今日の道具箱はこの 3 つ（<b>削除の道具はわざと入れない</b>）。これを FastAPI + fastapi-mcp で、<b>main.py 1 ファイル（約 130 行）</b>に作る。</p>
 </section>
 
-<!-- 2. Zentaizou -->
+<!-- 3. Zentaizou -->
 <section class="slide">
   <div class="eyebrow">全体像</div>
   <h2>入口は 2 つ、中身は 1 つ <small>― 同じサーバーを人間と AI が使う</small></h2>
   <div class="diagram">
     <div class="dcol" style="flex:1">
       <div class="dbox human"><span class="t">人間</span><br><span class="d">ログインして入館証（トークン）をもらう</span></div>
-      <div class="dbox mcp"><span class="t">AI（Claude）</span><br><span class="d">さっきの道具箱（MCP）を持っている。入るときは合鍵で</span></div>
+      <div class="dbox mcp"><span class="t">AI（Claude）</span><br><span class="d">合鍵を持って URL（/mcp）につなぐ</span></div>
     </div>
     <div class="arrowcol"><span>⟶</span><span>⟶</span></div>
     <div class="stack" style="flex:1.3">
-      <div class="dbox human"><span class="t">受付ゾーン</span> <span class="d">来たのが人間か AI かをここで見分ける</span></div>
-      <div class="dbox reg"><span class="t">AI がやっていいことリスト</span> <span class="d">AI に許す操作はここに書いたものだけ</span></div>
-      <div class="dbox"><span class="t">窓口</span> <span class="d">お願いを受けて、返事を返す</span></div>
-      <div class="dbox"><span class="t">ルール係</span> <span class="d">入力チェック・重複チェック</span></div>
-      <div class="dbox"><span class="t">保管係</span> <span class="d">データを保存する</span></div>
+      <div class="dbox human"><span class="t">受付</span> <span class="d">来たのが人間か AI かをここで見分ける</span></div>
+      <div class="dbox reg"><span class="t">やっていいことリスト</span> <span class="d">AI の道具箱に入れる操作はここに書いたものだけ</span></div>
+      <div class="dbox"><span class="t">API 本体</span> <span class="d">ふつうの CRUD（FastAPI）</span></div>
+      <div class="dbox mcp"><span class="t">AI への説明係</span> <span class="d">fastapi-mcp が自動生成。/mcp で待っている</span></div>
     </div>
   </div>
-  <p class="note">AI が道具を 1 つ使うたび、お願いが 1 回右の中身へ飛ぶ。この絵を 5 つの部品に分けて、<b>「土台 → 入口 → リスト → 説明係 → 配り方」</b>の順に作っていく。</p>
+  <p class="note">AI が道具を 1 つ使うたび、お願いが 1 回右の中身へ飛ぶ。これを<b>「土台 → 入口 → リスト → 説明係 → つなぎ方」</b>の順に作っていく。</p>
 </section>
 
-<!-- 3. Layer ichiran -->
+<!-- 4. map of main.py -->
 <section class="slide">
   <div class="eyebrow">完成マップ</div>
-  <h2>作ると全部で 7 つの係になる <small>― 1 つの係 = 1 つのファイル</small></h2>
+  <h2>main.py の地図 <small>― 部品 5 つ、全部 1 ファイル</small></h2>
   <div class="tblwrap">
   <table>
-    <tr><th>作るもの</th><th>係</th><th>ファイル</th><th>やること（一言で）</th></tr>
-    <tr><td>①</td><td>窓口</td><td><code>api/usersController.mjs</code></td><td>お願いを受けて、返事を返す</td></tr>
-    <tr><td>①</td><td>ルール係</td><td><code>api/usersService.mjs</code></td><td>入力チェックや「email 重複はダメ」などのルール担当</td></tr>
-    <tr><td>①</td><td>保管係</td><td><code>api/usersRepository.mjs</code></td><td>データを保存するだけ（今回は勉強用にメモリ保存）</td></tr>
-    <tr><td>②</td><td>受付（人間用）</td><td><code>api/auth/userAuth.mjs</code></td><td>ログイン → 入館証を発行。「人間だけ」の扉も守る</td></tr>
-    <tr><td>②</td><td>受付（AI 用）</td><td><code>api/auth/agentAuth.mjs</code></td><td>事前に渡してある合鍵（アクセスキー）を確認する</td></tr>
-    <tr><td>③</td><td>やっていいことリスト</td><td><code>api/agentRegistry.mjs</code></td><td>ここに書いた API だけ AI が使える</td></tr>
-    <tr><td>④</td><td>AI への説明係</td><td><code>mcp/index.mjs</code></td><td>道具箱の中身。API の使い方を AI に教えながら取り次ぐ</td></tr>
+    <tr><th>部品</th><th>main.py の場所</th><th>やること（一言で）</th></tr>
+    <tr><td>①</td><td><code>@app.get("/employees")</code> など</td><td>ふつうの CRUD（お願いを受けて返す）</td></tr>
+    <tr><td>②</td><td><code>login()</code> + <code>sessions</code></td><td>人間の入口: ログイン → 入館証を発行</td></tr>
+    <tr><td>②</td><td><code>AGENT_KEYS</code> + <code>get_actor()</code></td><td>AI の入口: 合鍵を確認して「誰が来たか」を確定</td></tr>
+    <tr><td>②</td><td><code>user_only()</code></td><td>門番: 破壊的操作を人間専用にする</td></tr>
+    <tr><td>③</td><td><code>include_operations=[...]</code></td><td>AI の道具箱に入れる操作を選ぶ</td></tr>
+    <tr><td>④</td><td><code>FastApiMCP(app, ...)</code></td><td>docstring から道具＋説明文を自動生成</td></tr>
+    <tr><td>⑤</td><td><code>/mcp</code>（+ 任意で <code>mcpb/</code>）</td><td>ローカル URL でつなぐ</td></tr>
   </table>
   </div>
-  <p class="note">⑤（配る仕組み）だけはファイルではなく届け方（Docker と .mcpb）。係を分けておくと、「AI まわりを変えたい」ときに<b>どのファイルを触ればいいかがすぐ分かる</b>。</p>
+  <p class="note">部品を分けて書いておくと、「AI まわりを変えたい」ときに<b>どこを触ればいいかがすぐ分かる</b>。</p>
 </section>
 
-<!-- 4. api body (build 1) -->
+<!-- 5. build 1: base api -->
 <section class="slide">
-  <div class="eyebrow">作るもの① まず、ふつうの API サーバー</div>
-  <h2>土台を作る <small>― 「ユーザー追加」が 3 つの係を通る</small></h2>
-  <p class="note" style="margin-top:0;margin-bottom:1.4vh">ここまでは AI と無関係の、ふつうの Web アプリ。<b>この土台に AI のための部品（②〜④）を足していく</b>。</p>
-  <div class="chain">
-    <div>
-      <div class="lbl">窓口 ― 受けて、渡して、返事するだけ</div>
-      <div class="shot"><pre>usersRouter.post(<span class="s">"/"</span>, <span class="fn">forAgent</span>(<span class="s">"create_user"</span>),
-  handle((req, res) =&gt; ok(res, usersService.create(req.body ?? {}), <span class="s">201</span>)));</pre></div>
-    </div>
-    <div>
-      <div class="lbl">ルール係 ― チェック担当（「email 重複はダメ」など）</div>
-      <div class="shot"><pre><span class="fn">create</span>(input) {
-  validate(input);  <span class="c">// 名前・email・役割をチェック</span>
-  <span class="k">if</span> (usersRepository.findByEmail(input.email))
-    <span class="k">throw new</span> ServiceError(<span class="s">409</span>, <span class="s">"email_taken"</span>, <span class="s">"その email は既に使われています"</span>);
-  <span class="k">return</span> usersRepository.create({ ... });
-}</pre></div>
-    </div>
-    <div>
-      <div class="lbl">保管係 ― 保存するだけ</div>
-      <div class="shot"><pre><span class="fn">create</span>({ name, email, role }) {
-  <span class="k">const</span> user = { id: nextId++, name, email, role };
-  users.set(user.id, user);
-  <span class="k">return</span> user;
-}</pre></div>
-    </div>
+  <div class="eyebrow">作るもの① まず、ふつうの API</div>
+  <h2>土台を作る <small>― ただの FastAPI エンドポイント</small></h2>
+  <div class="shot">
+    <div class="file"><span class="dot"></span>main.py ― ① 土台</div>
+    <pre>@app.get(<span class="s">"/employees"</span>, operation_id=<span class="s">"list_employees"</span>)
+<span class="k">def</span> <span class="fn">list_employees</span>(actor: dict = Depends(get_actor)):
+<span class="hl">    <span class="s">"""全社員の一覧（id・名前・給与）を返す。ID が必要な操作の前にまずこれで確認する。"""</span></span>
+    <span class="k">return</span> {<span class="s">"employees"</span>: employees}
+
+@app.post(<span class="s">"/employees"</span>, operation_id=<span class="s">"create_employee"</span>)
+<span class="k">def</span> <span class="fn">create_employee</span>(body: EmployeeBody, actor: dict = Depends(get_actor)):
+<span class="hl">    <span class="s">"""社員を給与つきで追加し、追加した社員を返す。"""</span></span>
+    emp = {<span class="s">"id"</span>: ..., **body.model_dump()}
+    employees.append(emp)
+    <span class="k">return</span> {<span class="s">"employee"</span>: emp}</pre>
   </div>
+  <p class="note">ここまでは AI と無関係の、ふつうの Web API。<b>ハイライトの docstring があとで効いてくる</b>（④ で AI への説明文になる）。<code>operation_id</code> が道具の名前になる。</p>
 </section>
 
-<!-- 5. userAuth (build 2) -->
+<!-- 6. build 2: human entrance -->
 <section class="slide">
   <div class="eyebrow">作るもの② 入口（受付） ― 人間側</div>
   <h2>人間の入口 <small>― ログインして入館証をもらう</small></h2>
   <div class="shot">
-    <div class="file"><span class="dot"></span>api/auth/userAuth.mjs</div>
-    <pre><span class="c">// ログイン成功 → 入館証（usr_ で始まるトークン）を発行</span>
-<span class="k">export function</span> <span class="fn">login</span>(login_id, password) {
-  <span class="k">const</span> found = LOGIN_USERS.find((u) =&gt;
-    u.login_id === login_id &amp;&amp; u.password === password);
-  <span class="k">if</span> (!found) <span class="k">return</span> <span class="k">null</span>;
-<span class="hl">  <span class="k">const</span> token = <span class="s">"usr_"</span> + randomUUID();</span>
-  sessions.set(token, { login_id: found.login_id, name: found.name });
-  <span class="k">return</span> token;
-}
+    <div class="file"><span class="dot"></span>main.py ― ② 受付（人間）</div>
+    <pre>LOGIN_USERS = {<span class="s">"alice"</span>: <span class="s">"demo"</span>}   <span class="c"># デモ用の固定ユーザー</span>
+sessions: dict[str, str] = {}      <span class="c"># 入館証 → だれか</span>
 
-<span class="c">// 「人間だけ」の扉。AI が来たら断る（削除・更新など）</span>
-<span class="k">export function</span> <span class="fn">userOnly</span>(req, res, next) {
-  <span class="k">if</span> (req.actor?.type === <span class="s">"user"</span>) <span class="k">return</span> next();
-  <span class="k">return</span> res.status(<span class="s">403</span>).json({ <span class="c">/* 「人間専用です」 */</span> });
-}</pre>
+@app.post(<span class="s">"/login"</span>, operation_id=<span class="s">"login"</span>)
+<span class="k">def</span> <span class="fn">login</span>(body: LoginBody):
+    <span class="s">"""ログイン。成功するとセッショントークンを返す（人間の入口）。"""</span>
+    <span class="k">if</span> LOGIN_USERS.get(body.login_id) != body.password:
+        <span class="k">raise</span> HTTPException(<span class="s">401</span>, <span class="s">"login_id か password が違います"</span>)
+<span class="hl">    token = <span class="s">"usr_"</span> + secrets.token_hex(<span class="s">16</span>)</span>
+    sessions[token] = body.login_id
+    <span class="k">return</span> {<span class="s">"token"</span>: token}</pre>
   </div>
-  <p class="note">いつもの Web サービスと同じ流れ。今回は勉強用に一番シンプルな形にしてある（本番では Cookie などを使う）。</p>
+  <p class="note">いつもの Web サービスと同じ流れ。勉強用に一番シンプルな形（本番では Cookie などにする）。</p>
 </section>
 
-<!-- 5. agentAuth -->
+<!-- 7. build 2: ai entrance + gatekeeper -->
 <section class="slide">
-  <div class="eyebrow">作るもの② 入口（受付） ― AI 側</div>
-  <h2>AI の入口 <small>― ログインなし。合鍵（アクセスキー）で入る</small></h2>
+  <div class="eyebrow">作るもの② 入口（受付） ― AI 側と門番</div>
+  <h2>AI は合鍵で入る。入口で見分けて、門番が守る</h2>
   <div class="shot">
-    <div class="file"><span class="dot"></span>api/auth/agentAuth.mjs</div>
-    <pre><span class="c">// AI は人間と別の入口から入る。ログインではなく、</span>
-<span class="c">// 事前に渡してある合鍵（アクセスキー）を見せてもらう方式。</span>
-<span class="c">//</span>
-<span class="c">// 本番では鍵を DB に保存する:</span>
-<span class="c">//   - 1 人ずつ発行できる（誰の鍵か分かる → 記録が残せる）</span>
-<span class="c">//   - 使わせたくなくなったら、その鍵だけ止められる</span>
-<span class="k">const</span> AGENT_KEYS = (process.env.AGENT_API_KEYS ?? <span class="s">"agent-demo-key"</span>)
-  .split(<span class="s">","</span>).map((s) =&gt; s.trim()).filter(Boolean);
+    <div class="file"><span class="dot"></span>main.py ― ② 受付（AI）</div>
+    <pre>AGENT_KEYS = {<span class="s">"agent-demo-key"</span>}  <span class="c"># AI 用の合鍵（実務では DB にハッシュ保存して発行・失効を管理）</span>
 
-<span class="k">export function</span> <span class="fn">resolveAgentToken</span>(token) {
-  <span class="k">return</span> AGENT_KEYS.includes(token) ? { key: token } : <span class="k">null</span>;
-}</pre>
+<span class="k">def</span> <span class="fn">get_actor</span>(authorization: str | <span class="k">None</span> = Header(<span class="k">None</span>)) -&gt; dict:
+    <span class="s">"""Bearer トークンを見て「人間か AI か」を確定する（入口は 1 箇所）。"""</span>
+    token = (authorization <span class="k">or</span> <span class="s">""</span>).removeprefix(<span class="s">"Bearer "</span>).strip()
+<span class="hl">    <span class="k">if</span> token <span class="k">in</span> sessions:   <span class="k">return</span> {<span class="s">"type"</span>: <span class="s">"user"</span>, ...}  <span class="c"># ① 入館証？→人間</span></span>
+<span class="hl">    <span class="k">if</span> token <span class="k">in</span> AGENT_KEYS: <span class="k">return</span> {<span class="s">"type"</span>: <span class="s">"agent"</span>}      <span class="c"># ② 合鍵？→AI</span></span>
+    <span class="k">raise</span> HTTPException(<span class="s">401</span>, <span class="s">"有効なトークンがありません"</span>)
+
+<span class="k">def</span> <span class="fn">user_only</span>(actor: dict = Depends(get_actor)) -&gt; dict:
+    <span class="s">"""門番: 破壊的操作に付ける。AI の合鍵なら 403。"""</span>
+    <span class="k">if</span> actor[<span class="s">"type"</span>] != <span class="s">"user"</span>:
+        <span class="k">raise</span> HTTPException(<span class="s">403</span>, <span class="s">"この操作は人間ユーザー専用です"</span>)</pre>
   </div>
-  <p class="note">この合鍵を持つのは道具箱（MCP）。<b>AI が道具を使うたび、道具箱がこの合鍵を見せて API を呼ぶ</b>。PAT（事前発行キー）方式は、コードにするとこの数行。</p>
+  <p class="note">入口を分けておくと「AI の鍵だけ止める・記録する」が簡単。削除エンドポイントには <code>Depends(user_only)</code> を付けるだけ。</p>
 </section>
 
-<!-- 6. actor middleware -->
+<!-- 8. build 3: allow-list -->
 <section class="slide">
-  <div class="eyebrow">作るもの② 入口（受付） ― 見分け方</div>
-  <h2>入口で「人間か AI か」を見分ける</h2>
+  <div class="eyebrow">作るもの③ やっていいことリスト（今日いちばん大事）</div>
+  <h2>AI の道具箱に入れる操作は「リストに書いたものだけ」</h2>
   <div class="shot">
-    <div class="file"><span class="dot"></span>api/server.mjs</div>
-    <pre><span class="c">// 見せられたトークンを確認して、「誰が来たか」を決める</span>
-app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
-  <span class="k">const</span> token = (req.headers.authorization ?? <span class="s">""</span>)
-    .replace(<span class="s">/^Bearer\s+/i</span>, <span class="s">""</span>);
-
-  <span class="k">const</span> session = resolveUserToken(token);      <span class="c">// ① 入館証？ → 人間</span>
-<span class="hl">  <span class="k">if</span> (session) { req.actor = { type: <span class="s">"user"</span>, name: session.name }; <span class="k">return</span> next(); }</span>
-
-  <span class="k">const</span> agent = resolveAgentToken(token);       <span class="c">// ② 合鍵？ → AI</span>
-<span class="hl">  <span class="k">if</span> (agent) { req.actor = { type: <span class="s">"agent"</span> }; <span class="k">return</span> next(); }</span>
-
-  res.status(<span class="s">401</span>).json({ <span class="c">/* どちらでもない → お断り */</span> });
-});</pre>
+    <div class="file"><span class="dot"></span>main.py ― ③ リスト + ④ 説明係の起動</div>
+    <pre>mcp = FastApiMCP(
+    app,
+    name=<span class="s">"Employee MCP"</span>,
+<span class="hl">    include_operations=[</span>
+<span class="hl">        <span class="s">"list_employees"</span>, <span class="s">"get_employee"</span>, <span class="s">"create_employee"</span>,</span>
+<span class="hl">        <span class="c"># delete_employee と login はわざと書かない = AI から見えない道具</span></span>
+<span class="hl">    ],</span>
+    auth_config=AuthConfig(dependencies=[Depends(get_actor)]),  <span class="c"># /mcp 自体にも合鍵</span>
+)
+mcp.mount_http()   <span class="c"># → http://localhost:8000/mcp</span></pre>
   </div>
-  <p class="note">見分けるのは<b>入口の 1 箇所だけ</b>。後ろの係たちは「人間か AI か」の結果を使うだけでいい。</p>
+  <p class="note">「この辺は全部 OK」とざっくり開けると<b>開けたくないものまで開く事故</b>が起きる（実体験）。削除は「リスト外（見えない）」+「門番で 403」の<b>二段構え</b>。</p>
 </section>
 
-<!-- 7. registry -->
-<section class="slide">
-  <div class="eyebrow">作るもの③ AI がやっていいことリスト（今日いちばん大事）</div>
-  <h2>AI に許す操作は「リストに書いたものだけ」</h2>
-  <div class="shot">
-    <div class="file"><span class="dot"></span>api/agentRegistry.mjs</div>
-    <pre><span class="c">// AI がやっていいことリスト。ここに書いた API だけ AI が使える</span>
-<span class="k">export const</span> AGENT_APIS = [
-  { name: <span class="s">"list_users"</span>,  method: <span class="s">"GET"</span>,  path: <span class="s">"/api/users"</span> },
-  { name: <span class="s">"get_user"</span>,    method: <span class="s">"GET"</span>,  path: <span class="s">"/api/users/:id"</span> },
-  { name: <span class="s">"create_user"</span>, method: <span class="s">"POST"</span>, path: <span class="s">"/api/users"</span> },
-<span class="hl">  <span class="c">// 削除・更新はわざと書かない = 人間にしかさせない</span></span>
-];
-
-<span class="k">export const</span> <span class="fn">forAgent</span> = (name) =&gt; (req, res, next) =&gt; {
-  <span class="k">if</span> (req.actor?.type === <span class="s">"user"</span>) <span class="k">return</span> next();  <span class="c">// 人間はいつでも OK</span>
-  <span class="k">if</span> (AGENT_APIS.some((a) =&gt; a.name === name)) <span class="k">return</span> next();
-  <span class="k">return</span> res.status(<span class="s">403</span>).json({ <span class="c">/* 「AI には開放していません」 */</span> });
-};</pre>
-  </div>
-  <p class="note">よく見ると、<b>このリストは道具箱の道具と同じ名前</b>（道具 create_user → リストの create_user）。「この辺は全部 OK」とざっくり開けると<b>開けたくないものまで開く事故</b>が起きる（実体験）— 1 個ずつ書けば、この表 = 道具箱の中身、と揃う。</p>
-</section>
-
-<!-- 8. permission matrix -->
+<!-- 9. permission matrix -->
 <section class="slide">
   <div class="eyebrow">作るもの③ ができると</div>
   <h2>同じ API でも、できることが違う</h2>
   <div class="tblwrap">
   <table>
     <tr><th>操作</th><th>人間</th><th>AI</th></tr>
-    <tr><td>ユーザー一覧を見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
-    <tr><td>ユーザーを 1 人見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
-    <tr><td>ユーザーを追加する</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
-    <tr><td>ユーザーを更新する</td><td class="yes">✔</td><td class="no2">✘ 人間専用</td></tr>
-    <tr><td>ユーザーを削除する</td><td class="yes">✔</td><td class="no2">✘ 人間専用</td></tr>
-    <tr><td>「AI にできること」の一覧を見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
+    <tr><td>ログイン</td><td class="yes">✔（入口）</td><td>―</td></tr>
+    <tr><td>社員一覧を見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
+    <tr><td>社員を 1 人見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
+    <tr><td>社員を追加する</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
+    <tr><td>社員を削除する</td><td class="yes">✔</td><td class="no2">✘ 見えない + 門番 403</td></tr>
+    <tr><td>/mcp につなぐ</td><td>―</td><td class="yes">✔ 合鍵必須</td></tr>
   </table>
   </div>
-  <p class="note">削除・更新はリストに書いていないので、AI は頼まれてもできない。しかも AI は<b>「自分に何ができるか」を自分で確認できる</b>（一番下の API）。</p>
+  <p class="note">AI に「2 番を削除して」と頼んでも、<b>道具箱に削除が無いので断ってくる</b>。仮に REST を直接叩かれても門番が 403。</p>
 </section>
 
-<!-- 10. MCP layer -->
+<!-- 10. build 4: auto explainer -->
 <section class="slide">
-  <div class="eyebrow">作るもの④ AI への説明係（MCP 本体）</div>
-  <h2>道具箱の中身を 1 つずつ作る <small>― tool( ) 1 回 = 道具 1 つ</small></h2>
+  <div class="eyebrow">作るもの④ AI への説明係（自動生成）</div>
+  <h2>説明文は書かない ― docstring がそのまま説明文になる</h2>
   <div class="shot">
-    <div class="file"><span class="dot"></span>mcp/index.mjs</div>
-    <pre>tool(server, <span class="s">"create_user"</span>, {
-  title: <span class="s">"ユーザー作成"</span>,
-<span class="hl">  description: <span class="s">"ユーザーを新規作成する。email が既存と重複すると失敗する</span></span>
-<span class="hl"><span class="s">    ので、事前に list_users で確認するとよい。"</span>,</span>
-  inputSchema: {
-    name:  z.string().min(<span class="s">1</span>).describe(<span class="s">"氏名"</span>),
-    email: z.string().describe(<span class="s">"メールアドレス（重複不可）"</span>),
-  },
-}, ...);
+    <div class="file"><span class="dot"></span>書いたもの → fastapi-mcp が作るもの</div>
+    <pre><span class="c"># main.py に書いたのはこれだけ:</span>
+@app.get(<span class="s">"/employees/{id}"</span>, operation_id=<span class="s">"get_employee"</span>)
+<span class="k">def</span> <span class="fn">get_employee</span>(id: int, actor: dict = Depends(get_actor)):
+<span class="hl">    <span class="s">"""社員を 1 人返す。id は list_employees で確認した実在の ID を使う（推測しない）。"""</span></span>
 
-<span class="c">// つないだ瞬間に AI へ渡す「お約束」も文章で書く:</span>
-<span class="c">//  「ID は推測しないで、必ず一覧で確認してから」</span>
-<span class="c">//  「削除を頼まれたら、管理画面を案内して」</span></pre>
+<span class="c"># ↓ AI にはこう見える（自動生成された道具）:</span>
+<span class="c">#   name:        get_employee</span>
+<span class="c">#   description: 社員を 1 人返す。id は list_employees で確認した</span>
+<span class="c">#                実在の ID を使う（推測しない）。</span>
+<span class="c">#   input:       { id: integer }   ← 型ヒントから自動</span></pre>
   </div>
-  <p class="note">道具の名前はリスト（③）と同じにしてある — 道具 create_user はリストの create_user を呼ぶ。説明文がそのまま <b>AI への指示書</b>になり、説明係自身は API を呼ぶだけで<b>特別な権限は持っていない</b>。</p>
+  <p class="note">自分で書くのは docstring だけ。そこに<b>「AI へのお願い」（推測しない・先に一覧を見る）を書き込む</b>のがコツ — AI の動きはコードより言葉で決まる。</p>
 </section>
 
-<!-- 11. deploy -->
+<!-- 11. build 5: connect -->
 <section class="slide">
-  <div class="eyebrow">作るもの⑤ 配る仕組み</div>
-  <h2>置き場所が違う <small>― API はサーバーに、説明係は各自の PC に</small></h2>
+  <div class="eyebrow">作るもの⑤ つなぎ方</div>
+  <h2>ローカル URL でつなぐ <small>― 設定は 1 行〜1 コマンド</small></h2>
   <div class="two">
     <div>
       <ul class="pts">
-        <li><b>API サーバー</b> → Docker でサーバーに置く<br><small>みんなで 1 つを使う（実務なら ECS 等）</small></li>
-        <li><b>説明係（MCP）</b> → <code>.mcpb</code> 1 ファイルで配る<br><small>中身は manifest.json + コードを zip しただけ。ダブルクリックで Claude に入る</small></li>
-        <li>鍵の入力フォームも manifest に書くだけ<br><small>sensitive を付けると OS の安全な場所に保存される</small></li>
+        <li>起動はコマンド 1 つ<small>（uvicorn）</small></li>
+        <li>Claude Code / Cursor は <b>URL + 合鍵ヘッダ</b>を書くだけ</li>
+        <li>Claude Desktop 向けには任意で <code>.mcpb</code><br><small>HTTP 型は直接入らないので、橋渡し（mcp-remote）だけを詰めた小さな拡張を同梱（mcpb/）</small></li>
       </ul>
     </div>
     <div class="shot">
-      <div class="file"><span class="dot"></span>manifest.json（.mcpb の設定）</div>
-      <pre><span class="s">"user_config"</span>: {
-  <span class="s">"api_key"</span>: {
-    <span class="s">"title"</span>: <span class="s">"エージェント用アクセスキー"</span>,
-<span class="hl">    <span class="s">"sensitive"</span>: <span class="k">true</span>,  <span class="c">// ← 安全に保存</span></span>
-    <span class="s">"required"</span>: <span class="k">true</span>
-  }
-}</pre>
+      <div class="file"><span class="dot"></span>ターミナル</div>
+      <pre>$ uvicorn main:app --port 8000
+
+<span class="c"># Claude Code はこれだけ:</span>
+$ claude mcp add --transport http employee \
+    http://localhost:8000/mcp \
+    --header <span class="s">"Authorization: Bearer agent-demo-key"</span></pre>
     </div>
   </div>
 </section>
@@ -366,24 +315,24 @@ app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
   <div class="eyebrow">ライブデモ</div>
   <h2>この順で見せます</h2>
   <ul class="pts">
-    <li>API サーバーを起動<small>（Docker、コマンド 1 つ）</small></li>
-    <li>人間として: ログイン → 一覧 → <b>削除も OK</b></li>
-    <li>AI の鍵で: 一覧は OK → <b>削除は断られる</b></li>
-    <li>自動テスト: AI の代わりのプログラムで 12 項目を一気に確認</li>
-    <li>本物の Claude から会話で操作</li>
+    <li><code>uvicorn</code> で起動<small>（localhost:8000）</small></li>
+    <li>curl で人間フロー: ログイン → 一覧 → <b>削除も OK</b></li>
+    <li>curl で AI の合鍵: 一覧は OK → <b>削除は 403</b></li>
+    <li>Claude から会話で操作<small>（「社員一覧見せて」→ list_employees）</small></li>
   </ul>
-  <p class="note">Claude に「3 番を削除して」と頼むと、削除の道具を持っていないので<b>「管理画面からどうぞ」と案内してくる</b> — ここが見せ場。</p>
+  <p class="note">Claude に「2 番を削除して」と頼むと、削除の道具を持っていないので<b>断ってくる</b> — ここが見せ場。</p>
 </section>
 
-<!-- 13. lessons -->
+<!-- 13. takeaways -->
 <section class="slide">
   <div class="eyebrow">作ってみて分かったこと</div>
-  <h2>今日の持ち帰り <small>― 実装して初めて見えたこと</small></h2>
+  <h2>今日の持ち帰り</h2>
   <ul class="pts">
-    <li>土台がふつうの Web アプリなら、<b>AI 対応（②〜④）は後付けできる</b><br><small>既存システムにも同じ手順で足せる</small></li>
-    <li>リスト（③）と道具箱（④）を<b>同じ名前で揃える</b> — それがそのまま AI 向けの仕様書になる</li>
-    <li>テストは<b>「AI の代わりのクライアント」</b>で自動化できる<br><small>今日のデモ: 12 項目を 1 コマンドで検証（npm test）</small></li>
-    <li>落とし穴: stdio サーバーで <code>console.log</code> すると通信が壊れる<br><small>ログは console.error へ</small></li>
+    <li>ふつうの API に、AI 対応（受付・リスト・説明）は<b>後付けできる</b><br><small>既存システムにも同じ手順で足せる</small></li>
+    <li>AI にさせたくない操作は<b>「リスト外 + 門番」の二段構え</b>で守る</li>
+    <li>説明文（docstring）が AI の動きを決める — <b>コードより言葉が効く</b></li>
+    <li>ライブラリの相性に注意<br><small>fastapi-mcp 0.4 は mcp 2.x と非互換 → requirements.txt で 1.x に固定</small></li>
+    <li>HTTP 型 MCP は <code>.mcpb</code> に直接入らない<br><small>配るなら URL 共有か、橋渡し（mcp-remote）を詰めた .mcpb</small></li>
   </ul>
 </section>
 
@@ -392,11 +341,11 @@ app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
   <div class="eyebrow">まとめ</div>
   <h2>入口は分ける・許可はリストで・説明は文章で</h2>
   <ul class="pts">
-    <li>係を分けたので、「AI に何を許すか」が<b>ファイル 1 つでわかる</b></li>
+    <li>main.py <b>1 ファイル（約 130 行）</b>に全部入っている — 読めば分かる</li>
     <li>コード: <code>github.com/d-bui/mcp-from-scratch</code><small>（README に動かし方あり）</small></li>
     <li>質問どうぞ！</li>
   </ul>
-  <p class="note">参考: MCP 自体はオープン規格（modelcontextprotocol.io）で、ChatGPT / Cursor / Gemini など他の AI クライアントからも同じサーバーにつなげる。<code>.mcpb</code> だけが Claude Desktop 用の配布形式（他クライアントは JSON 設定や URL 接続を使う）。</p>
+  <p class="note">参考: MCP 自体はオープン規格（modelcontextprotocol.io）で、ChatGPT / Cursor / Gemini など他の AI クライアントからも同じサーバーにつなげる。<code>.mcpb</code> だけが Claude Desktop 用の配布形式。</p>
 </section>
 
 <script>

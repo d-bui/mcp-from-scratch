@@ -1,11 +1,11 @@
-# main.py — FastAPI + fastapi-mcp 版（1 ファイル・ローカル専用）
+# main.py — FastAPI + fastapi-mcp で作る MCP サーバーデモ（1 ファイル・ローカル専用）
 #
-# Node 版（../api + ../mcp）と同じ考え方を、FastAPI で最短に書いたもの:
+# 部品は 5 つ:
 #   ① 土台の API     … ふつうの CRUD エンドポイント
 #   ② 入口（受付）   … 人間 = ログイン → セッショントークン ／ AI = 合鍵（PAT）
 #   ③ やっていいことリスト … include_operations（ここに書いた操作だけ AI の道具になる）
 #   ④ AI への説明係   … fastapi-mcp が自動生成（docstring がそのまま道具の説明文になる）
-#   ⑤ 配り方         … ローカルのみ。/mcp に URL でつなぐ（.mcpb は使わない）
+#   ⑤ つなぎ方       … ローカル URL（/mcp）でつなぐ。.mcpb は任意（mcpb/ 参照）
 #
 # 起動:  uvicorn main:app --port 8000
 # 接続:  Claude Code → claude mcp add --transport http employee \
