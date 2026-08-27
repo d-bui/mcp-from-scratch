@@ -144,25 +144,6 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
   <p class="note">AI が道具を 1 つ使うたび、お願いが 1 回右の中身へ飛ぶ。これを<b>「土台 → 入口 → リスト → 説明係 → つなぎ方」</b>の順に作っていく。</p>
 </section>
 
-<!-- 4. map of main.py -->
-<section class="slide">
-  <div class="eyebrow">完成マップ</div>
-  <h2>main.py の地図 <small>― 部品 5 つ、全部 1 ファイル</small></h2>
-  <div class="tblwrap">
-  <table>
-    <tr><th>部品</th><th>main.py の場所</th><th>やること（一言で）</th></tr>
-    <tr><td>①</td><td><code>@app.get("/users")</code> など</td><td>ふつうの CRUD（お願いを受けて返す）</td></tr>
-    <tr><td>②</td><td><code>login()</code> + <code>sessions</code></td><td>人間の入口: ログイン → 入館証を発行</td></tr>
-    <tr><td>②</td><td><code>AGENT_KEYS</code> + <code>get_actor()</code></td><td>AI の入口: 合鍵を確認して「誰が来たか」を確定</td></tr>
-    <tr><td>②</td><td><code>user_only()</code></td><td>門番: 破壊的操作を人間専用にする</td></tr>
-    <tr><td>③</td><td><code>include_operations=[...]</code></td><td>AI の道具箱に入れる操作を選ぶ</td></tr>
-    <tr><td>④</td><td><code>FastApiMCP(app, ...)</code></td><td>docstring から道具＋説明文を自動生成</td></tr>
-    <tr><td>⑤</td><td><code>/mcp</code>（+ 任意で <code>mcpb/</code>）</td><td>ローカル URL でつなぐ</td></tr>
-  </table>
-  </div>
-  <p class="note">部品を分けて書いておくと、「AI まわりを変えたい」ときに<b>どこを触ればいいかがすぐ分かる</b>。</p>
-</section>
-
 <!-- 5. build 1: base api -->
 <section class="slide">
   <div class="eyebrow">作るもの① まず、ふつうの API</div>
@@ -184,31 +165,10 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
   <p class="note">ここまでは AI と無関係の、ふつうの Web API。<b>ハイライトの docstring があとで効いてくる</b>（④ で AI への説明文になる）。<code>operation_id</code> が道具の名前になる。</p>
 </section>
 
-<!-- 6. build 2: human entrance -->
-<section class="slide">
-  <div class="eyebrow">作るもの② 入口（受付） ― 人間側</div>
-  <h2>人間の入口 <small>― ログインして入館証をもらう</small></h2>
-  <div class="shot">
-    <div class="file"><span class="dot"></span>main.py ― ② 受付（人間）</div>
-    <pre>LOGIN_USERS = {<span class="s">"alice"</span>: <span class="s">"demo"</span>}   <span class="c"># デモ用の固定ユーザー</span>
-sessions: dict[str, str] = {}      <span class="c"># 入館証 → だれか</span>
-
-@app.post(<span class="s">"/login"</span>, operation_id=<span class="s">"login"</span>)
-<span class="k">def</span> <span class="fn">login</span>(body: LoginBody):
-    <span class="s">"""ログイン。成功するとセッショントークンを返す（人間の入口）。"""</span>
-    <span class="k">if</span> LOGIN_USERS.get(body.login_id) != body.password:
-        <span class="k">raise</span> HTTPException(<span class="s">401</span>, <span class="s">"login_id か password が違います"</span>)
-<span class="hl">    token = <span class="s">"usr_"</span> + secrets.token_hex(<span class="s">16</span>)</span>
-    sessions[token] = body.login_id
-    <span class="k">return</span> {<span class="s">"token"</span>: token}</pre>
-  </div>
-  <p class="note">いつもの Web サービスと同じ流れ。勉強用に一番シンプルな形（本番では Cookie などにする）。</p>
-</section>
-
 <!-- 7. build 2: ai entrance + gatekeeper -->
 <section class="slide">
-  <div class="eyebrow">作るもの② 入口（受付） ― AI 側と門番</div>
-  <h2>AI は合鍵で入る。入口で見分けて、門番が守る</h2>
+  <div class="eyebrow">作るもの② 入口（受付）</div>
+  <h2>入口を 2 つに分ける <small>― 人間はログイン、AI は合鍵</small></h2>
   <div class="shot">
     <div class="file"><span class="dot"></span>main.py ― ② 受付（AI）</div>
     <pre>AGENT_KEYS = {<span class="s">"agent-demo-key"</span>}  <span class="c"># AI 用の合鍵（実務では DB にハッシュ保存して発行・失効を管理）</span>
@@ -225,7 +185,7 @@ sessions: dict[str, str] = {}      <span class="c"># 入館証 → だれか</sp
     <span class="k">if</span> actor[<span class="s">"type"</span>] != <span class="s">"user"</span>:
         <span class="k">raise</span> HTTPException(<span class="s">403</span>, <span class="s">"この操作は人間ユーザー専用です"</span>)</pre>
   </div>
-  <p class="note">入口を分けておくと「AI の鍵だけ止める・記録する」が簡単。削除エンドポイントには <code>Depends(user_only)</code> を付けるだけ。</p>
+  <p class="note">人間側の入口（<code>login()</code> → 入館証）はいつもの Web と同じ作りなので割愛（main.py 参照）。入口を分けておくと<b>「AI の鍵だけ止める・記録する」が簡単</b>。削除エンドポイントには <code>Depends(user_only)</code> を付けるだけ。</p>
 </section>
 
 <!-- 8. build 3: allow-list -->
@@ -245,25 +205,7 @@ sessions: dict[str, str] = {}      <span class="c"># 入館証 → だれか</sp
 )
 mcp.mount_http()   <span class="c"># → http://localhost:8000/mcp</span></pre>
   </div>
-  <p class="note">「この辺は全部 OK」とざっくり開けると<b>開けたくないものまで開く事故</b>が起きる（実体験）。削除は「リスト外（見えない）」+「門番で 403」の<b>二段構え</b>。</p>
-</section>
-
-<!-- 9. permission matrix -->
-<section class="slide">
-  <div class="eyebrow">作るもの③ ができると</div>
-  <h2>同じ API でも、できることが違う</h2>
-  <div class="tblwrap">
-  <table>
-    <tr><th>操作</th><th>人間</th><th>AI</th></tr>
-    <tr><td>ログイン</td><td class="yes">✔（入口）</td><td>―</td></tr>
-    <tr><td>ユーザー一覧を見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
-    <tr><td>ユーザーを 1 人見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
-    <tr><td>ユーザーを追加する</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
-    <tr><td>ユーザーを削除する</td><td class="yes">✔</td><td class="no2">✘ 見えない + 門番 403</td></tr>
-    <tr><td>/mcp につなぐ</td><td>―</td><td class="yes">✔ 合鍵必須</td></tr>
-  </table>
-  </div>
-  <p class="note">AI に「2 番を削除して」と頼んでも、<b>道具箱に削除が無いので断ってくる</b>。仮に REST を直接叩かれても門番が 403。</p>
+  <p class="note">結果: 一覧・取得・追加は人間も AI も OK、<b>削除は人間だけ</b>（AI は道具が無く断り、REST を直接叩いても門番が 403 — 二段構え）。「この辺は全部 OK」とざっくり開けると<b>開けたくないものまで開く事故</b>が起きる（実体験）。</p>
 </section>
 
 <!-- 10. build 4: auto explainer -->
@@ -319,26 +261,14 @@ mcp.mount_http()   <span class="c"># → http://localhost:8000/mcp</span></pre>
   <p class="note">Claude Code / Cursor 派は設定に URL を書けば、同じ会話がそのままできる。</p>
 </section>
 
-<!-- 13. takeaways -->
-<section class="slide">
-  <div class="eyebrow">作ってみて分かったこと</div>
-  <h2>今日の持ち帰り</h2>
-  <ul class="pts">
-    <li>ふつうの API に、AI 対応（受付・リスト・説明）は<b>後付けできる</b><br><small>既存システムにも同じ手順で足せる</small></li>
-    <li>AI にさせたくない操作は<b>「リスト外 + 門番」の二段構え</b>で守る</li>
-    <li>説明文（docstring）が AI の動きを決める — <b>コードより言葉が効く</b></li>
-    <li>ライブラリの相性に注意<br><small>fastapi-mcp 0.4 は mcp 2.x と非互換 → requirements.txt で 1.x に固定</small></li>
-    <li>HTTP 型 MCP は <code>.mcpb</code> に直接入らない<br><small>配るなら URL 共有か、橋渡し（mcp-remote）を詰めた .mcpb</small></li>
-  </ul>
-</section>
-
 <!-- 14. end -->
 <section class="slide">
   <div class="eyebrow">まとめ</div>
   <h2>入口は分ける・許可はリストで・説明は文章で</h2>
   <ul class="pts">
-    <li>main.py <b>1 ファイル（約 130 行）</b>に全部入っている — 読めば分かる</li>
-    <li>コード: <code>github.com/d-bui/mcp-from-scratch</code><small>（README に動かし方あり）</small></li>
+    <li>ふつうの API に、AI 対応は<b>後付けできる</b> — 既存システムにも同じ手順</li>
+    <li>AI の動きは<b>説明文（docstring）</b>が決める — コードより言葉が効く</li>
+    <li>main.py <b>1 ファイル（約 130 行）</b>: <code>github.com/d-bui/mcp-from-scratch</code></li>
     <li>この後ろに<b>付録（手順書）3 枚</b> — スライドがそのまま手元ガイドになります</li>
     <li>質問どうぞ！</li>
   </ul>
