@@ -164,6 +164,10 @@ API のコードや Docker 関連ファイルは拡張機能に同梱されな�
 
 ## 参考
 
+- MCP はオープン規格 — Claude 以外の AI クライアント（ChatGPT / Cursor / Gemini など）も
+  対応しており、この `mcp/index.mjs` は `.mcp.json` 相当の JSON 設定でそのまま使える。
+  `.mcpb` だけが Claude Desktop 専用の配布形式（Web ベースのクライアントにはリモート
+  URL で公開する）。
 - MCP 仕様・ドキュメント: https://modelcontextprotocol.io
 - TypeScript/JS SDK: https://github.com/modelcontextprotocol/typescript-sdk
 - MCPB（manifest 仕様 + CLI）: https://github.com/anthropics/mcpb

@@ -13,6 +13,12 @@
 //
 // 注意: stdio サーバーでは stdout に console.log してはいけない
 // （stdout は JSON-RPC 専用）。ログは console.error（stderr）へ。
+//
+// 補足: MCP はオープン規格（https://modelcontextprotocol.io）。このサーバーは
+// Claude 以外の MCP 対応クライアント（ChatGPT / Cursor / Gemini CLI など）からも
+// .mcp.json 相当の JSON 設定（command + args + env）でそのまま使える。
+// .mcpb（manifest.json + zip）だけは Claude Desktop 専用の配布形式で、
+// Web ベースのクライアントにつなぐ場合は stdio ではなくリモート（HTTP）で公開する。
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
