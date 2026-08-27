@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>人間とAIが同じAPIを使う</title>
+<title>MCPを作るときに気をつけること</title>
 <style>
 :root {
   --bg: #0f172a; --bg2: #1e293b; --fg: #e2e8f0; --muted: #94a3b8;
@@ -102,12 +102,13 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
 <!-- 1. Title -->
 <section class="slide active" id="s1">
   <div class="kicker">勉強会 ／ デモ紹介</div>
-  <h1>人間と AI が<br>同じ API を使う<br><small style="font-size:.45em;color:var(--muted)">― 小さなデモで仕組みを見る</small></h1>
+  <h1>MCP サーバーを作るとき<br>気をつけること<br><small style="font-size:.45em;color:var(--muted)">― 小さなデモで順番に見ていく</small></h1>
   <div class="pill-row">
-    <span class="pill">API サーバー</span>
-    <span class="pill">受付（人間用と AI 用）</span>
-    <span class="pill">AI がやっていいことリスト</span>
-    <span class="pill">AI への説明係（MCP）</span>
+    <span class="pill">① 入口を分ける</span>
+    <span class="pill">② 許可はリストで</span>
+    <span class="pill">③ 係を分ける</span>
+    <span class="pill">④ 説明文で動きが決まる</span>
+    <span class="pill">⑤ 届け方</span>
   </div>
   <div class="author">発表者：ミズン ／ コードは GitHub で共有します</div>
 </section>
@@ -130,7 +131,7 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
       <div class="dbox"><span class="t">保管係</span> <span class="d">データを保存する</span></div>
     </div>
   </div>
-  <p class="note">ポイントは 2 つだけ。<b>「誰が来たか」は受付が決める</b>。<b>「AI に何を許すか」はリストが決める</b>。</p>
+  <p class="note">大事なことは 2 つ。<b>「誰が来たか」は受付が決める</b>。<b>「AI に何を許すか」はリストが決める</b>。</p>
 </section>
 
 <!-- 3. Layer ichiran -->
@@ -154,7 +155,7 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
 
 <!-- 4. userAuth -->
 <section class="slide">
-  <div class="eyebrow">受付ゾーン ①</div>
+  <div class="eyebrow">ポイント① 入口は人間と AI で分ける ― 人間側</div>
   <h2>人間の入口 <small>― ログインして入館証をもらう</small></h2>
   <div class="shot">
     <div class="file"><span class="dot"></span>api/auth/userAuth.mjs</div>
@@ -179,7 +180,7 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
 
 <!-- 5. agentAuth -->
 <section class="slide">
-  <div class="eyebrow">受付ゾーン ②</div>
+  <div class="eyebrow">ポイント① 入口は人間と AI で分ける ― AI 側</div>
   <h2>AI の入口 <small>― ログインなし。合鍵（アクセスキー）で入る</small></h2>
   <div class="shot">
     <div class="file"><span class="dot"></span>api/auth/agentAuth.mjs</div>
@@ -201,7 +202,7 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
 
 <!-- 6. actor middleware -->
 <section class="slide">
-  <div class="eyebrow">受付ゾーン ③</div>
+  <div class="eyebrow">ポイント① 入口は人間と AI で分ける ― 見分け方</div>
   <h2>入口で「人間か AI か」を見分ける</h2>
   <div class="shot">
     <div class="file"><span class="dot"></span>api/server.mjs</div>
@@ -224,7 +225,7 @@ app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
 
 <!-- 7. registry -->
 <section class="slide">
-  <div class="eyebrow">今日いちばん大事なところ</div>
+  <div class="eyebrow">ポイント② 許可はリストで（今日いちばん大事）</div>
   <h2>AI に許す操作は「リストに書いたものだけ」</h2>
   <div class="shot">
     <div class="file"><span class="dot"></span>api/agentRegistry.mjs</div>
@@ -247,7 +248,7 @@ app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
 
 <!-- 8. permission matrix -->
 <section class="slide">
-  <div class="eyebrow">結果</div>
+  <div class="eyebrow">ポイント② の結果</div>
   <h2>同じ API でも、できることが違う</h2>
   <div class="tblwrap">
   <table>
@@ -265,7 +266,7 @@ app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
 
 <!-- 9. controller/service/repository -->
 <section class="slide">
-  <div class="eyebrow">API サーバーの中身</div>
+  <div class="eyebrow">ポイント③ 係を分けて小さく保つ</div>
   <h2>1 つのお願いが 3 つの係を通る <small>― 「ユーザー追加」の例</small></h2>
   <div class="chain">
     <div>
@@ -295,7 +296,7 @@ app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
 
 <!-- 10. MCP layer -->
 <section class="slide">
-  <div class="eyebrow">AI への説明係（MCP）</div>
+  <div class="eyebrow">ポイント④ AI の動きは「説明文」で決まる</div>
   <h2>MCP は「AI 向けの取扱説明書」つきの窓口</h2>
   <div class="shot">
     <div class="file"><span class="dot"></span>mcp/index.mjs</div>
@@ -318,7 +319,7 @@ app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
 
 <!-- 11. deploy -->
 <section class="slide">
-  <div class="eyebrow">届け方</div>
+  <div class="eyebrow">ポイント⑤ 届け方</div>
   <h2>置き場所が違う <small>― API はサーバーに、説明係は各自の PC に</small></h2>
   <div class="two">
     <div>
