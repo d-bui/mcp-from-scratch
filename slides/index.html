@@ -289,43 +289,34 @@ mcp.mount_http()   <span class="c"># → http://localhost:8000/mcp</span></pre>
 <!-- 11. build 5: connect -->
 <section class="slide">
   <div class="eyebrow">作るもの⑤ つなぎ方</div>
-  <h2>ローカル URL でつなぐ <small>― 設定は 1 行〜1 コマンド</small></h2>
-  <div class="two">
-    <div>
-      <ul class="pts">
-        <li>起動はコマンド 1 つ<small>（uvicorn）</small></li>
-        <li>Claude Code / Cursor は <b>URL + 合鍵ヘッダ</b>を書くだけ</li>
-        <li>Claude Desktop 向けには任意で <code>.mcpb</code><br><small>HTTP 型は直接入らないので、橋渡し（mcp-remote）だけを詰めた小さな拡張を同梱（mcpb/）</small></li>
-        <li>できた .mcpb は<b>ダブルクリックで導入</b><br><small>フォームに URL と合鍵を入れるだけ（合鍵は OS の安全な場所に保存）</small></li>
-      </ul>
+  <h2>API サーバーが動いていれば、AI は「つなぐだけ」</h2>
+  <div class="diagram">
+    <div class="dcol" style="flex:1.25">
+      <div class="dbox mcp"><span class="t">Claude Desktop</span><br><span class="d"><code>.mcpb</code> をダブルクリック → フォームに URL と合鍵を入れるだけ（合鍵は OS の安全な場所に保存）</span></div>
+      <div class="dbox agent"><span class="t">Claude Code ／ Cursor</span><br><span class="d">設定ファイルに URL + 合鍵を書くだけ</span></div>
+      <div class="dbox"><span class="t">その他の AI クライアント</span><br><span class="d">MCP はオープン規格 — 同じ URL につなげる</span></div>
     </div>
-    <div class="shot">
-      <div class="file"><span class="dot"></span>ターミナル</div>
-      <pre>$ uvicorn main:app --port 8000
-
-<span class="c"># Claude Code はこれだけ:</span>
-$ claude mcp add --transport http users \
-    http://localhost:8000/mcp \
-    --header <span class="s">"Authorization: Bearer agent-demo-key"</span>
-
-<span class="c"># Claude Desktop 向け（任意）: .mcpb を作って配る</span>
-$ cd mcpb &amp;&amp; npm install
-$ npx @anthropic-ai/mcpb pack . ../dist/users-mcp-local.mcpb</pre>
+    <div class="arrowcol" style="gap:4vh"><span>⟶</span><span>⟶</span><span>⟶</span></div>
+    <div class="dcol" style="flex:1">
+      <div class="dbox human"><span class="t">FastAPI サーバー（1 つ）</span><br><span class="d">http://localhost:8000/mcp<br>裏で起動しておくだけ</span></div>
     </div>
   </div>
+  <p class="note">利用者側に<b>コマンドは要らない</b>。配布用の <code>.mcpb</code> は同梱の <code>mcpb/</code> から 2 コマンドで作れる（手順は README）。</p>
 </section>
 
 <!-- 12. demo cheat sheet -->
 <section class="slide">
   <div class="eyebrow">ライブデモ</div>
-  <h2>この順で見せます</h2>
+  <h2>Claude Desktop でつないで、会話で操作</h2>
   <ul class="pts">
-    <li><code>uvicorn</code> で起動<small>（localhost:8000）</small></li>
-    <li>curl で人間フロー: ログイン → 一覧 → <b>削除も OK</b></li>
-    <li>curl で AI の合鍵: 一覧は OK → <b>削除は 403</b></li>
-    <li>Claude から会話で操作<small>（「ユーザー一覧見せて」→ list_users）</small></li>
+    <li>裏方: API サーバーを起動しておく<small>（ターミナルはここだけ）</small></li>
+    <li><code>users-mcp-local.mcpb</code> を<b>ダブルクリック</b> → Claude Desktop に入る</li>
+    <li>フォームに URL（既定のまま）と合鍵 <code>agent-demo-key</code> を入力</li>
+    <li>会話:「ユーザー一覧見せて」→ <code>list_users</code> が動く</li>
+    <li>「新しいユーザーを登録して」→ <code>create_user</code></li>
+    <li>「1 番を削除して」→ <b>道具が無いので断られる</b>（見せ場）</li>
   </ul>
-  <p class="note">Claude に「2 番を削除して」と頼むと、削除の道具を持っていないので<b>断ってくる</b> — ここが見せ場。</p>
+  <p class="note">Claude Code / Cursor 派は設定に URL を書けば、同じ会話がそのままできる。</p>
 </section>
 
 <!-- 13. takeaways -->
