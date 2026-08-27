@@ -1,0 +1,19 @@
+{
+  "name": "mcp-layered-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "api": "node api/server.mjs",
+    "mcp": "node mcp/index.mjs",
+    "test": "node test/mcp-client.test.mjs",
+    "inspect": "npx @modelcontextprotocol/inspector node mcp/index.mjs",
+    "pack": "mkdir -p dist && npx @anthropic-ai/mcpb pack . dist/users-mcp-demo.mcpb",
+    "docker": "docker compose up --build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "express": "^5.1.0",
+    "zod": "^4.4.3"
+  }
+}

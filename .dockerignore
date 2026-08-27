@@ -1,0 +1,10 @@
+# イメージに入れないもの（依存はイメージ内で npm ci する）
+node_modules
+dist
+mcp
+*.mcpb
+.git
+README.md
+manifest.json
+Dockerfile
+compose.yml

@@ -1,0 +1,13 @@
+# ── 発表デモ用 Docker Compose ───────────────────────────────────
+# 起動:  docker compose up --build   → http://localhost:3000
+# API サーバーのみコンテナ化。MCP 層は手元で node 起動（README 参照）。
+
+services:
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      # AI エージェント用 PAT（カンマ区切りで複数登録可）。
+      # 実務では env ファイルやシークレット管理から注入する。
+      AGENT_API_KEYS: agent-demo-key

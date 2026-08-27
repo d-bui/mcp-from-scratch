@@ -1,0 +1,14 @@
+# .mcpb（Desktop Extension）に同梱しないもの。
+# 拡張機能に必要なのは manifest.json + mcp/ + node_modules だけ。
+api/
+dist/
+test/
+slides/
+.mcp.json
+Dockerfile
+compose.yml
+.dockerignore
+.gitignore
+*.mcpb
+README.md
+package-lock.json

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>人間とAIが同じAPIを使う</title>
+<style>
+:root {
+  --bg: #0f172a; --bg2: #1e293b; --fg: #e2e8f0; --muted: #94a3b8;
+  --accent: #818cf8; --accent2: #22d3ee;
+  --ok: #34d399; --warn: #fbbf24; --no: #fb7185;
+  --code-bg: #020617; --line: #243049;
+  --font: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Meiryo", "Noto Sans JP", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+body { font-family: var(--font); background: var(--bg); color: var(--fg); overflow: hidden; -webkit-font-smoothing: antialiased; }
+
+#progress { position: fixed; top: 0; left: 0; height: 4px; background: linear-gradient(90deg, var(--accent), var(--accent2)); width: 0; z-index: 50; transition: width .25s ease; }
+#pagenum { position: fixed; bottom: 2vh; right: 2.4vw; color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; z-index: 50; }
+
+.slide { position: absolute; inset: 0; display: none; flex-direction: column; justify-content: center; padding: 6vh 8vw; opacity: 0; transition: opacity .3s ease; }
+.slide.active { display: flex; opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .slide, #progress { transition: none; } }
+
+.eyebrow { color: var(--accent2); font-weight: 700; letter-spacing: .18em; font-size: clamp(.7rem, 1.3vw, .95rem); margin-bottom: 1.6vh; text-transform: uppercase; }
+h1 { font-size: clamp(2rem, 5vw, 3.8rem); line-height: 1.25; text-wrap: balance; }
+h2 { font-size: clamp(1.4rem, 3.2vw, 2.4rem); margin-bottom: 2.2vh; color: #fff; text-wrap: balance; }
+h2 small { color: var(--muted); font-weight: 500; font-size: .55em; }
+
+ul.pts { list-style: none; display: flex; flex-direction: column; gap: 1.4vh; }
+ul.pts li { font-size: clamp(.95rem, 2vw, 1.4rem); line-height: 1.55; padding-left: 1.5em; position: relative; }
+ul.pts li::before { content: "▸"; position: absolute; left: 0; color: var(--accent); }
+ul.pts li small { color: var(--muted); font-size: .82em; }
+b { color: #fff; }
+
+code { font-family: var(--mono); background: var(--code-bg); color: var(--accent2); padding: .1em .4em; border-radius: .3em; font-size: .85em; }
+
+/* ---- code shot panel ---- */
+.shot { background: var(--code-bg); border: 1px solid var(--line); border-radius: .8rem; overflow: hidden; }
+.shot .file { display: flex; align-items: center; gap: .6em; padding: .55em 1em; background: var(--bg2); border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: clamp(.7rem, 1.3vw, .9rem); color: var(--accent2); }
+.shot .file .dot { width: .6em; height: .6em; border-radius: 50%; background: var(--accent); }
+.shot pre { padding: 1em 1.2em; overflow-x: auto; font-family: var(--mono); font-size: clamp(.68rem, 1.55vw, 1.02rem); line-height: 1.62; color: var(--fg); }
+.shot .c { color: #64748b; font-style: italic; }          /* comment */
+.shot .s { color: var(--warn); }                          /* string  */
+.shot .k { color: var(--accent); }                        /* keyword */
+.shot .fn { color: var(--accent2); }                      /* function */
+.shot .hl { display: inline-block; width: 100%; background: rgba(129,140,248,.14); border-left: 3px solid var(--accent); margin-left: -1.2em; padding-left: calc(1.2em - 3px); }
+.note { margin-top: 1.8vh; color: var(--muted); font-size: clamp(.85rem, 1.7vw, 1.15rem); line-height: 1.55; }
+.note b { color: var(--accent2); }
+
+/* ---- diagram ---- */
+.diagram { display: flex; align-items: stretch; gap: 2.5vw; margin-top: 1vh; }
+.dcol { display: flex; flex-direction: column; gap: 1.6vh; justify-content: center; }
+.dbox { border: 1.5px solid var(--line); border-radius: .7rem; padding: 1.2vh 1.3vw; background: var(--bg2); font-size: clamp(.8rem, 1.7vw, 1.15rem); line-height: 1.45; }
+.dbox .t { font-weight: 700; color: #fff; }
+.dbox .d { color: var(--muted); font-size: .82em; }
+.dbox.human { border-color: var(--accent2); }
+.dbox.agent { border-color: var(--accent); }
+.dbox.reg   { border-color: var(--warn); }
+.dbox.mcp   { border-color: var(--ok); }
+.stack { display: flex; flex-direction: column; gap: .9vh; flex: 1; justify-content: center; }
+.arrowcol { display: flex; flex-direction: column; justify-content: center; color: var(--muted); font-size: clamp(1rem, 2.4vw, 1.8rem); gap: 7vh; }
+
+/* ---- tables ---- */
+.tblwrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: clamp(.78rem, 1.7vw, 1.15rem); }
+th, td { padding: 1vh 1.1vw; text-align: left; border-bottom: 1px solid var(--line); line-height: 1.45; }
+th { color: var(--accent2); font-size: .85em; letter-spacing: .06em; }
+td code { font-size: .82em; }
+.yes { color: var(--ok); font-weight: 700; }
+.no2 { color: var(--no); font-weight: 700; }
+
+/* ---- 3-mini shots row ---- */
+.chain { display: flex; flex-direction: column; gap: 1.4vh; }
+.chain .shot pre { font-size: clamp(.62rem, 1.35vw, .92rem); padding: .7em 1.1em; }
+.chain .lbl { font-size: clamp(.75rem, 1.4vw, 1rem); color: var(--accent2); font-weight: 700; margin-bottom: .4vh; }
+
+/* ---- title slide ---- */
+#s1 { background:
+  radial-gradient(1200px 600px at 80% -10%, rgba(129,140,248,.22), transparent),
+  radial-gradient(900px 500px at -10% 110%, rgba(34,211,238,.16), transparent); }
+.kicker { color: var(--accent2); font-weight: 700; letter-spacing: .18em; font-size: clamp(.75rem, 1.4vw, 1rem); margin-bottom: 2.2vh; }
+.pill-row { display: flex; gap: .8em; flex-wrap: wrap; margin-top: 3vh; }
+.pill { background: var(--code-bg); border: 1px solid var(--line); border-radius: 999px; padding: .45em 1.1em; font-size: clamp(.75rem, 1.5vw, 1rem); color: var(--fg); }
+.author { margin-top: 4vh; color: var(--muted); font-size: clamp(.9rem, 1.8vw, 1.2rem); }
+
+/* ---- two column ---- */
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5vw; align-items: start; }
+@media (max-width: 760px) { .two { grid-template-columns: 1fr; } .diagram { flex-direction: column; } .arrowcol { display: none; } }
+
+kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--line); border-radius: .3em; padding: .05em .45em; font-size: .8em; }
+.foot-hint { position: fixed; bottom: 2vh; left: 2.4vw; color: #475569; font-size: .8rem; }
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div id="pagenum"></div>
+<div class="foot-hint">← → キーで移動</div>
+
+<!-- 1. Title -->
+<section class="slide active">
+  <div class="kicker">勉強会 ／ ハンズオン解説</div>
+  <h1>人間と AI が<br>同じ API を使う<br><small style="font-size:.45em;color:var(--muted)">― レイヤーで見る users-mcp-demo</small></h1>
+  <div class="pill-row">
+    <span class="pill">Node.js / Express</span>
+    <span class="pill">認証 2 系統</span>
+    <span class="pill">公開レジストリ</span>
+    <span class="pill">MCP サーバー</span>
+    <span class="pill">.mcpb 配布</span>
+  </div>
+  <div class="author">発表者：ミズン ／ コードは共有リポジトリ参照</div>
+</section>
+
+<!-- 2. Zentaizou -->
+<section class="slide">
+  <div class="eyebrow">全体像</div>
+  <h2>入口は 2 つ、中身は 1 つ <small>― 同じ API を別々の認証で</small></h2>
+  <div class="diagram">
+    <div class="dcol" style="flex:1">
+      <div class="dbox human"><span class="t">人間ユーザー</span><br><span class="d">ログイン → セッショントークン</span></div>
+      <div class="dbox mcp"><span class="t">AI（Claude）+ MCP サーバー</span><br><span class="d">PAT（事前発行キー）／ .mcpb で配布</span></div>
+    </div>
+    <div class="arrowcol"><span>⟶</span><span>⟶</span></div>
+    <div class="stack" style="flex:1.3">
+      <div class="dbox human"><span class="t">認証層（2 系統）</span> <span class="d">userAuth / agentAuth → actor 確定</span></div>
+      <div class="dbox reg"><span class="t">公開レジストリ</span> <span class="d">AI に開放する API の登録リスト</span></div>
+      <div class="dbox"><span class="t">controller</span> <span class="d">HTTP ⇄ サービス変換 + ガード宣言</span></div>
+      <div class="dbox"><span class="t">service</span> <span class="d">業務ルール（HTTP を知らない）</span></div>
+      <div class="dbox"><span class="t">repository</span> <span class="d">データ保存（デモはメモリ）</span></div>
+    </div>
+  </div>
+  <p class="note">API は 1 セットだけ。<b>「誰が呼んでいるか」を認証層が確定</b>し、<b>「AI に何を許すか」をレジストリが決める</b>。</p>
+</section>
+
+<!-- 3. Layer ichiran -->
+<section class="slide">
+  <div class="eyebrow">レイヤー一覧</div>
+  <h2>各層は 1 ファイル、責務は 1 つ</h2>
+  <div class="tblwrap">
+  <table>
+    <tr><th>層</th><th>ファイル</th><th>責務</th></tr>
+    <tr><td>認証（人間）</td><td><code>api/auth/userAuth.mjs</code></td><td>ログイン → セッション発行、<code>userOnly</code> ガード</td></tr>
+    <tr><td>認証（AI）</td><td><code>api/auth/agentAuth.mjs</code></td><td>PAT 検証（ログイン不要・別系統）</td></tr>
+    <tr><td>公開レジストリ</td><td><code>api/agentRegistry.mjs</code></td><td>AI に開放する API の登録リスト + <code>forAgent</code> ガード</td></tr>
+    <tr><td>コントローラ</td><td><code>api/usersController.mjs</code></td><td>HTTP ⇄ サービス変換、ルートごとにガードを宣言</td></tr>
+    <tr><td>サービス</td><td><code>api/usersService.mjs</code></td><td>業務ルール。HTTP も「呼び出し元が誰か」も知らない</td></tr>
+    <tr><td>リポジトリ</td><td><code>api/usersRepository.mjs</code></td><td>データ保存だけ（メモリ → 実務は MySQL 等に差し替え）</td></tr>
+    <tr><td>MCP（API 説明層）</td><td><code>mcp/index.mjs</code></td><td>AI に API の使い方を説明しながら仲介。権限は持たない</td></tr>
+  </table>
+  </div>
+</section>
+
+<!-- 4. userAuth -->
+<section class="slide">
+  <div class="eyebrow">認証層 ①</div>
+  <h2>人間ユーザー <small>― ログインしてセッショントークン</small></h2>
+  <div class="shot">
+    <div class="file"><span class="dot"></span>api/auth/userAuth.mjs</div>
+    <pre><span class="c">// ログイン成功 → セッショントークン（usr_ プレフィックス）を発行</span>
+<span class="k">export function</span> <span class="fn">login</span>(login_id, password) {
+  <span class="k">const</span> found = LOGIN_USERS.find((u) =&gt;
+    u.login_id === login_id &amp;&amp; u.password === password);
+  <span class="k">if</span> (!found) <span class="k">return</span> <span class="k">null</span>;
+<span class="hl">  <span class="k">const</span> token = <span class="s">"usr_"</span> + randomUUID();</span>
+  sessions.set(token, { login_id: found.login_id, name: found.name });
+  <span class="k">return</span> token;
+}
+
+<span class="c">// ガード:「人間ユーザー専用」API に付ける（更新・削除など）</span>
+<span class="k">export function</span> <span class="fn">userOnly</span>(req, res, next) {
+  <span class="k">if</span> (req.actor?.type === <span class="s">"user"</span>) <span class="k">return</span> next();
+  <span class="k">return</span> res.status(<span class="s">403</span>).json({ <span class="c">/* code: "user_only" */</span> });
+}</pre>
+  </div>
+  <p class="note">実務では JWT + httpOnly Cookie（spx は JWT 30 日 Cookie）。デモはメモリの Map で最小構成。</p>
+</section>
+
+<!-- 5. agentAuth -->
+<section class="slide">
+  <div class="eyebrow">認証層 ②</div>
+  <h2>AI エージェント <small>― ログインではなく事前発行キー（PAT）</small></h2>
+  <div class="shot">
+    <div class="file"><span class="dot"></span>api/auth/agentAuth.mjs</div>
+    <pre><span class="c">// 人間のログインとは完全に別系統。セッションを持たない。</span>
+<span class="c">// デモは env から読むが、実務では DB に保存する:</span>
+<span class="c">//   - 管理者ごとに発行し、ハッシュ化して api_keys テーブルへ</span>
+<span class="c">//     （平文は発行時に一度だけ表示）</span>
+<span class="c">//   - トークン → 所有者を引けるので監査ログに残せる</span>
+<span class="c">//   - 無効化・ローテーションが DB の 1 レコード操作でできる</span>
+<span class="k">const</span> AGENT_KEYS = (process.env.AGENT_API_KEYS ?? <span class="s">"agent-demo-key"</span>)
+  .split(<span class="s">","</span>).map((s) =&gt; s.trim()).filter(Boolean);
+
+<span class="k">export function</span> <span class="fn">resolveAgentToken</span>(token) {
+  <span class="k">return</span> AGENT_KEYS.includes(token) ? { key: token } : <span class="k">null</span>;
+}</pre>
+  </div>
+  <p class="note">別系統にする理由: <b>失効・監査・レート制限を人間と別に設計できる</b>。キー 1 本で「どの AI 接続か」まで追える。</p>
+</section>
+
+<!-- 6. actor middleware -->
+<section class="slide">
+  <div class="eyebrow">認証層 ③</div>
+  <h2>入口で「誰か」を確定する <small>― actor 判定ミドルウェア</small></h2>
+  <div class="shot">
+    <div class="file"><span class="dot"></span>api/server.mjs</div>
+    <pre><span class="c">// Bearer トークンを見て actor（誰が呼んでいるか）を確定する</span>
+app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
+  <span class="k">const</span> token = (req.headers.authorization ?? <span class="s">""</span>)
+    .replace(<span class="s">/^Bearer\s+/i</span>, <span class="s">""</span>);
+
+  <span class="k">const</span> session = resolveUserToken(token);      <span class="c">// ① 人間？</span>
+<span class="hl">  <span class="k">if</span> (session) { req.actor = { type: <span class="s">"user"</span>, name: session.name }; <span class="k">return</span> next(); }</span>
+
+  <span class="k">const</span> agent = resolveAgentToken(token);       <span class="c">// ② AI？</span>
+<span class="hl">  <span class="k">if</span> (agent) { req.actor = { type: <span class="s">"agent"</span> }; <span class="k">return</span> next(); }</span>
+
+  res.status(<span class="s">401</span>).json({ <span class="c">/* code: "unauthorized" */</span> }); <span class="c">// ③ 拒否</span>
+});</pre>
+  </div>
+  <p class="note">以降の全ルートは <code>req.actor.type</code>（"user" | "agent"）だけを見ればいい。<b>判定は 1 箇所</b>。</p>
+</section>
+
+<!-- 7. registry -->
+<section class="slide">
+  <div class="eyebrow">公開レジストリ（このデモの肝）</div>
+  <h2>AI に許す API は「明示的な登録制」</h2>
+  <div class="shot">
+    <div class="file"><span class="dot"></span>api/agentRegistry.mjs</div>
+    <pre><span class="c">// ここに登録された API だけが AI エージェントから呼べる</span>
+<span class="k">export const</span> AGENT_APIS = [
+  { name: <span class="s">"list_users"</span>,  method: <span class="s">"GET"</span>,  path: <span class="s">"/api/users"</span> },
+  { name: <span class="s">"get_user"</span>,    method: <span class="s">"GET"</span>,  path: <span class="s">"/api/users/:id"</span> },
+  { name: <span class="s">"create_user"</span>, method: <span class="s">"POST"</span>, path: <span class="s">"/api/users"</span> },
+<span class="hl">  <span class="c">// update / delete は意図的に登録しない = 破壊的操作は人間専用</span></span>
+];
+
+<span class="k">export const</span> <span class="fn">forAgent</span> = (name) =&gt; (req, res, next) =&gt; {
+  <span class="k">if</span> (req.actor?.type === <span class="s">"user"</span>) <span class="k">return</span> next();  <span class="c">// 人間は常に OK</span>
+  <span class="k">if</span> (AGENT_APIS.some((a) =&gt; a.name === name)) <span class="k">return</span> next();
+  <span class="k">return</span> res.status(<span class="s">403</span>).json({ <span class="c">/* code: "agent_not_allowed" */</span> });
+};</pre>
+  </div>
+  <p class="note">パスのプレフィックスで開放すると<b>隣のセンシティブな API まで開く事故</b>が起きる（実運用のヒヤリ経験）。1 本ずつの登録制なら、この表がそのまま <b>AI 向け API 仕様書</b>になる。</p>
+</section>
+
+<!-- 8. permission matrix -->
+<section class="slide">
+  <div class="eyebrow">結果</div>
+  <h2>権限マトリクス <small>― 同じ API、違う権限</small></h2>
+  <div class="tblwrap">
+  <table>
+    <tr><th>API</th><th>人間ユーザー</th><th>AI エージェント</th></tr>
+    <tr><td>GET <code>/api/users</code>（一覧）</td><td class="yes">✔</td><td class="yes">✔ 登録済み</td></tr>
+    <tr><td>GET <code>/api/users/:id</code>（取得）</td><td class="yes">✔</td><td class="yes">✔ 登録済み</td></tr>
+    <tr><td>POST <code>/api/users</code>（作成）</td><td class="yes">✔</td><td class="yes">✔ 登録済み</td></tr>
+    <tr><td>PUT <code>/api/users/:id</code>（更新）</td><td class="yes">✔</td><td class="no2">✘ user_only</td></tr>
+    <tr><td>DELETE <code>/api/users/:id</code>（削除）</td><td class="yes">✔</td><td class="no2">✘ user_only</td></tr>
+    <tr><td>GET <code>/api/agent/apis</code>（公開一覧）</td><td class="yes">✔</td><td class="yes">✔ 登録済み</td></tr>
+  </table>
+  </div>
+  <p class="note">エラーコードも 2 種類: <code>user_only</code> = 人間専用ガード付き、<code>agent_not_allowed</code> = レジストリ未登録。<b>AI は自分の使える一覧を自分で取得できる</b>（/agent/apis）。</p>
+</section>
+
+<!-- 9. controller/service/repository -->
+<section class="slide">
+  <div class="eyebrow">3 層の分離</div>
+  <h2>1 リクエストが 3 層を通る <small>― POST /api/users の例</small></h2>
+  <div class="chain">
+    <div>
+      <div class="lbl">controller ― HTTP とガードだけ</div>
+      <div class="shot"><pre>usersRouter.post(<span class="s">"/"</span>, <span class="fn">forAgent</span>(<span class="s">"create_user"</span>),
+  handle((req, res) =&gt; ok(res, usersService.create(req.body ?? {}), <span class="s">201</span>)));</pre></div>
+    </div>
+    <div>
+      <div class="lbl">service ― 業務ルールだけ（HTTP を知らない）</div>
+      <div class="shot"><pre><span class="fn">create</span>(input) {
+  validate(input);  <span class="c">// name / email / role</span>
+  <span class="k">if</span> (usersRepository.findByEmail(input.email))
+    <span class="k">throw new</span> ServiceError(<span class="s">409</span>, <span class="s">"email_taken"</span>, <span class="s">"その email は既に使われています"</span>);
+  <span class="k">return</span> usersRepository.create({ ... });
+}</pre></div>
+    </div>
+    <div>
+      <div class="lbl">repository ― 保存だけ（実務は MySQL に差し替え）</div>
+      <div class="shot"><pre><span class="fn">create</span>({ name, email, role }) {
+  <span class="k">const</span> user = { id: nextId++, name, email, role };
+  users.set(user.id, user);
+  <span class="k">return</span> user;
+}</pre></div>
+    </div>
+  </div>
+</section>
+
+<!-- 10. MCP layer -->
+<section class="slide">
+  <div class="eyebrow">MCP 層</div>
+  <h2>MCP は「API 説明層」 <small>― 説明文がそのまま AI への指示書</small></h2>
+  <div class="shot">
+    <div class="file"><span class="dot"></span>mcp/index.mjs</div>
+    <pre>tool(server, <span class="s">"create_user"</span>, {
+  title: <span class="s">"ユーザー作成"</span>,
+<span class="hl">  description: <span class="s">"ユーザーを新規作成する。email が既存と重複すると失敗する</span></span>
+<span class="hl"><span class="s">    （email_taken）ので、事前に list_users で確認するとよい。"</span>,</span>
+  inputSchema: {
+    name:  z.string().min(<span class="s">1</span>).describe(<span class="s">"氏名"</span>),
+    email: z.string().describe(<span class="s">"メールアドレス（重複不可）"</span>),
+  },
+}, <span class="k">async</span> ({ name, email, role }) =&gt;
+  ok(<span class="k">await</span> api(<span class="s">"POST"</span>, <span class="s">"/users"</span>, { name, email, role })));
+
+<span class="c">// 接続時に渡す運用ルール（instructions）:</span>
+<span class="c">//  「ID は推測せず必ず list_users で解決」</span>
+<span class="c">//  「更新・削除はできない → 管理画面を案内」</span></pre>
+  </div>
+  <p class="note">MCP 層は <b>DB に触れず、権限も持たない</b>。PAT で REST API を呼ぶだけ — 権限判定・バリデーションは API 側 1 箇所。<b>AI の振る舞いはコードではなく文章（description）で制御</b>する。</p>
+</section>
+
+<!-- 11. deploy -->
+<section class="slide">
+  <div class="eyebrow">配布・デプロイ</div>
+  <h2>デプロイ単位が違う <small>― API は Docker、MCP は .mcpb</small></h2>
+  <div class="two">
+    <div>
+      <ul class="pts">
+        <li><b>API サーバー</b> → Docker コンテナ<br><small>サーバー側で稼働（実務なら ECS 等）</small></li>
+        <li><b>MCP サーバー</b> → <code>.mcpb</code> ファイル<br><small>利用者の PC で Claude が stdio 起動。Node 不要・ダブルクリックで導入</small></li>
+        <li>API URL とキーはインストール時の<b>フォーム入力</b><br><small>sensitive キーは OS キーチェーンに保存</small></li>
+      </ul>
+    </div>
+    <div class="shot">
+      <div class="file"><span class="dot"></span>manifest.json（.mcpb）</div>
+      <pre><span class="s">"server"</span>: {
+  <span class="s">"type"</span>: <span class="s">"node"</span>,
+  <span class="s">"entry_point"</span>: <span class="s">"mcp/index.mjs"</span>, ...
+},
+<span class="s">"user_config"</span>: {
+  <span class="s">"api_key"</span>: {
+    <span class="s">"title"</span>: <span class="s">"エージェント用アクセスキー"</span>,
+<span class="hl">    <span class="s">"sensitive"</span>: <span class="k">true</span>,</span>
+    <span class="s">"required"</span>: <span class="k">true</span>
+  }
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- 12. demo cheat sheet -->
+<section class="slide">
+  <div class="eyebrow">ライブデモ</div>
+  <h2>デモ手順 <small>― この順で見せます</small></h2>
+  <ul class="pts">
+    <li><code>npm run docker</code> — API 起動<small>（localhost:3000）</small></li>
+    <li>curl で人間フロー: ログイン → 一覧 → <b>削除も OK</b></li>
+    <li>curl で AI フロー: PAT で一覧 OK → <b>削除は 403</b>（user_only）</li>
+    <li><code>npm test</code> — MCP を SDK クライアントで E2E 検証<small>（12 項目、異常系込み）</small></li>
+    <li>Claude Code / Desktop から実際に会話で操作<small>（.mcp.json / .mcpb）</small></li>
+  </ul>
+  <p class="note">「3 番を削除して」と頼むと、AI は削除ツールを持たないので<b>管理画面を案内してくる</b> — ここが見せ場。</p>
+</section>
+
+<!-- 13. lessons -->
+<section class="slide">
+  <div class="eyebrow">実運用からの学び</div>
+  <h2>65 ツール運用して分かったこと <small>― spx-learning-square より</small></h2>
+  <ul class="pts">
+    <li>MCP 層は<b>権限を持たせない</b> — 壊れても UI にできない事故は起きない</li>
+    <li>認証は<b>人間と AI で別系統</b> — 失効・監査・レート制限を独立に設計</li>
+    <li>AI への公開は<b>登録制</b> — プレフィックス開放は事故のもと</li>
+    <li>エラーは throw せず <code>isError</code> + 機械可読 code — AI が自力でリカバリーできる</li>
+    <li>stdout は JSON-RPC 専用 — <code>console.log</code> 1 行で通信が壊れる</li>
+    <li>ツールの description = <b>AI への指示書</b> — 挙動は文章で制御する</li>
+  </ul>
+</section>
+
+<!-- 14. end -->
+<section class="slide">
+  <div class="eyebrow">まとめ</div>
+  <h2>同じ API・別々の入口・明示的な公開範囲</h2>
+  <ul class="pts">
+    <li>層を分けたから、<b>「AI に何を許すか」が 1 ファイルで見える</b></li>
+    <li>コードは共有リポジトリの <code>mcp-from-scratch/</code> を参照<small>（README に手順あり）</small></li>
+    <li>質問どうぞ！</li>
+  </ul>
+</section>
+
+<script>
+const slides = [...document.querySelectorAll(".slide")];
+const progress = document.getElementById("progress");
+const pagenum = document.getElementById("pagenum");
+let i = 0;
+function go(n) {
+  i = Math.max(0, Math.min(slides.length - 1, n));
+  slides.forEach((s, j) => s.classList.toggle("active", j === i));
+  progress.style.width = ((i + 1) / slides.length * 100) + "%";
+  pagenum.textContent = (i + 1) + " / " + slides.length;
+}
+addEventListener("keydown", (e) => {
+  if (["ArrowRight", "ArrowDown", " ", "PageDown"].includes(e.key)) { e.preventDefault(); go(i + 1); }
+  else if (["ArrowLeft", "ArrowUp", "PageUp"].includes(e.key)) { e.preventDefault(); go(i - 1); }
+  else if (e.key === "Home") go(0);
+  else if (e.key === "End") go(slides.length - 1);
+});
+addEventListener("click", (e) => {
+  if (e.target.closest("a")) return;
+  if (e.clientX > innerWidth * 0.66) go(i + 1);
+  else if (e.clientX < innerWidth * 0.33) go(i - 1);
+});
+go(0);
+</script>
+</body>
+</html>
