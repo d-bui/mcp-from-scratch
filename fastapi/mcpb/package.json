@@ -1,0 +1,11 @@
+{
+  "name": "employee-mcp-local",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "pack": "npx @anthropic-ai/mcpb pack"
+  },
+  "dependencies": {
+    "mcp-remote": "^0.1.21"
+  }
+}

@@ -3,3 +3,5 @@ dist/
 *.mcpb
 .DS_Store
 slides/deck-artifact.html
+venv/
+__pycache__/

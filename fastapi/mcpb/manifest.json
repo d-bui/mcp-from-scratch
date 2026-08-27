@@ -1,0 +1,40 @@
+{
+  "manifest_version": "0.3",
+  "name": "employee-mcp-local",
+  "display_name": "Employee MCP (FastAPI local)",
+  "version": "0.1.0",
+  "description": "ローカルで動く FastAPI の MCP エンドポイント（/mcp）へ橋渡しする Claude Desktop 拡張。FastAPI サーバーは別途起動しておく。",
+  "author": { "name": "d.bui" },
+  "server": {
+    "type": "node",
+    "entry_point": "node_modules/mcp-remote/dist/proxy.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/node_modules/mcp-remote/dist/proxy.js",
+        "${user_config.api_url}",
+        "--header",
+        "Authorization:${AUTH_HEADER}"
+      ],
+      "env": {
+        "AUTH_HEADER": "Bearer ${user_config.api_key}"
+      }
+    }
+  },
+  "user_config": {
+    "api_url": {
+      "type": "string",
+      "title": "MCP URL",
+      "description": "FastAPI サーバーの MCP エンドポイント",
+      "default": "http://localhost:8000/mcp",
+      "required": true
+    },
+    "api_key": {
+      "type": "string",
+      "title": "エージェント用アクセスキー",
+      "description": "デモの既定値: agent-demo-key",
+      "sensitive": true,
+      "required": true
+    }
+  }
+}

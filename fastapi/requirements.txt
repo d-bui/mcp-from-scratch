@@ -1,0 +1,5 @@
+fastapi
+fastapi-mcp
+uvicorn
+# fastapi-mcp 0.4.x は mcp 2.x と非互換（Server の引数が変わった）なので 1.x に固定する
+mcp>=1.12,<2

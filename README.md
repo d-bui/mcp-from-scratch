@@ -51,6 +51,43 @@ Node.js（JS のみ）で作る小さなデモ。「同じ API を **人間ユ�
 破壊的操作（更新・削除）はレジストリに**登録しない**ことで人間専用にしている。
 「AI に何を許すか」が `agentRegistry.mjs` の 1 ファイルで一覧できるのがポイント。
 
+## FastAPI 版 ― 最短で MCP サーバーを立てる（`fastapi/`）
+
+Node 版（上のレイヤー解説用）と同じ考え方を、`fastapi/main.py` **1 ファイル**に
+凝縮した版。[fastapi-mcp](https://github.com/tadata-org/fastapi_mcp) が API から
+MCP を自動生成するので、④ 説明係を自分で書かなくていい:
+
+- **docstring がそのまま道具の説明文**になる
+- **`include_operations` がやっていいことリスト**（delete と login はわざと入れない）
+- 認証は Node 版と同じ 2 系統（人間 = ログイン、AI = 合鍵）+ `/mcp` 自体にも合鍵チェック
+
+```bash
+cd fastapi
+python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
+./venv/bin/uvicorn main:app --port 8000        # → MCP は http://localhost:8000/mcp
+```
+
+つなぎ方（ローカル・URL 接続なので .mcpb 不要）:
+
+```bash
+# Claude Code
+claude mcp add --transport http employee http://localhost:8000/mcp \
+  --header "Authorization: Bearer agent-demo-key"
+```
+
+Cursor は `.cursor/mcp.json` に `url` + `headers` を書くだけ。
+
+**Claude Desktop 用 `.mcpb`（任意）**: HTTP サーバーはそのまま .mcpb にできないので、
+`fastapi/mcpb/` に「mcp-remote への橋渡し」だけを詰めた拡張を用意している:
+
+```bash
+cd fastapi/mcpb && npm install
+npx @anthropic-ai/mcpb pack . ../../dist/employee-mcp-local.mcpb
+```
+
+インストール時に URL とアクセスキーをフォームで入力。FastAPI サーバー自体は
+手元で起動しておく（ローカル前提）。
+
 ## 動かし方
 
 ### 1. API サーバー
