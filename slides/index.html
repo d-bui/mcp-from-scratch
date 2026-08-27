@@ -296,6 +296,7 @@ mcp.mount_http()   <span class="c"># → http://localhost:8000/mcp</span></pre>
         <li>起動はコマンド 1 つ<small>（uvicorn）</small></li>
         <li>Claude Code / Cursor は <b>URL + 合鍵ヘッダ</b>を書くだけ</li>
         <li>Claude Desktop 向けには任意で <code>.mcpb</code><br><small>HTTP 型は直接入らないので、橋渡し（mcp-remote）だけを詰めた小さな拡張を同梱（mcpb/）</small></li>
+        <li>できた .mcpb は<b>ダブルクリックで導入</b><br><small>フォームに URL と合鍵を入れるだけ（合鍵は OS の安全な場所に保存）</small></li>
       </ul>
     </div>
     <div class="shot">
@@ -305,7 +306,11 @@ mcp.mount_http()   <span class="c"># → http://localhost:8000/mcp</span></pre>
 <span class="c"># Claude Code はこれだけ:</span>
 $ claude mcp add --transport http users \
     http://localhost:8000/mcp \
-    --header <span class="s">"Authorization: Bearer agent-demo-key"</span></pre>
+    --header <span class="s">"Authorization: Bearer agent-demo-key"</span>
+
+<span class="c"># Claude Desktop 向け（任意）: .mcpb を作って配る</span>
+$ cd mcpb &amp;&amp; npm install
+$ npx @anthropic-ai/mcpb pack . ../dist/users-mcp-local.mcpb</pre>
     </div>
   </div>
 </section>
