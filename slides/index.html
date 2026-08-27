@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>MCPを作るときに気をつけること</title>
+<title>MCPサーバーを作る</title>
 <style>
 :root {
   --bg: #0f172a; --bg2: #1e293b; --fg: #e2e8f0; --muted: #94a3b8;
@@ -102,13 +102,13 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
 <!-- 1. Title -->
 <section class="slide active" id="s1">
   <div class="kicker">勉強会 ／ デモ紹介</div>
-  <h1>MCP サーバーを作るとき<br>気をつけること<br><small style="font-size:.45em;color:var(--muted)">― 小さなデモで順番に見ていく</small></h1>
+  <h1>MCP サーバーを作る<br><small style="font-size:.45em;color:var(--muted)">― 何を組み立てればいいか、小さなデモで見ていく</small></h1>
   <div class="pill-row">
-    <span class="pill">① 入口を分ける</span>
-    <span class="pill">② 許可はリストで</span>
-    <span class="pill">③ 係を分ける</span>
-    <span class="pill">④ 説明文で動きが決まる</span>
-    <span class="pill">⑤ 届け方</span>
+    <span class="pill">① 土台の API サーバー</span>
+    <span class="pill">② 入口（受付）</span>
+    <span class="pill">③ やっていいことリスト</span>
+    <span class="pill">④ AI への説明係</span>
+    <span class="pill">⑤ 配る仕組み</span>
   </div>
   <div class="author">発表者：ミズン ／ コードは GitHub で共有します</div>
 </section>
@@ -131,13 +131,13 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
       <div class="dbox"><span class="t">保管係</span> <span class="d">データを保存する</span></div>
     </div>
   </div>
-  <p class="note">大事なことは 2 つ。<b>「誰が来たか」は受付が決める</b>。<b>「AI に何を許すか」はリストが決める</b>。</p>
+  <p class="note">この絵を 5 つの部品に分けて、<b>「土台 → 入口 → リスト → 説明係 → 配り方」</b>の順に作っていく。大事な決めごとは 2 つ: 「誰が来たか」は受付が、「AI に何を許すか」はリストが決める。</p>
 </section>
 
 <!-- 3. Layer ichiran -->
 <section class="slide">
-  <div class="eyebrow">役割分担</div>
-  <h2>7 つの係に分けた <small>― 1 つの係 = 1 つのファイル</small></h2>
+  <div class="eyebrow">完成マップ</div>
+  <h2>作ると全部で 7 つの係になる <small>― 1 つの係 = 1 つのファイル</small></h2>
   <div class="tblwrap">
   <table>
     <tr><th>係</th><th>ファイル</th><th>やること（一言で）</th></tr>
@@ -153,121 +153,10 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
   <p class="note">係を分けておくと、「AI まわりを変えたい」ときに<b>どのファイルを触ればいいかがすぐ分かる</b>。</p>
 </section>
 
-<!-- 4. userAuth -->
+<!-- 4. api body (build 1) -->
 <section class="slide">
-  <div class="eyebrow">ポイント① 入口は人間と AI で分ける ― 人間側</div>
-  <h2>人間の入口 <small>― ログインして入館証をもらう</small></h2>
-  <div class="shot">
-    <div class="file"><span class="dot"></span>api/auth/userAuth.mjs</div>
-    <pre><span class="c">// ログイン成功 → 入館証（usr_ で始まるトークン）を発行</span>
-<span class="k">export function</span> <span class="fn">login</span>(login_id, password) {
-  <span class="k">const</span> found = LOGIN_USERS.find((u) =&gt;
-    u.login_id === login_id &amp;&amp; u.password === password);
-  <span class="k">if</span> (!found) <span class="k">return</span> <span class="k">null</span>;
-<span class="hl">  <span class="k">const</span> token = <span class="s">"usr_"</span> + randomUUID();</span>
-  sessions.set(token, { login_id: found.login_id, name: found.name });
-  <span class="k">return</span> token;
-}
-
-<span class="c">// 「人間だけ」の扉。AI が来たら断る（削除・更新など）</span>
-<span class="k">export function</span> <span class="fn">userOnly</span>(req, res, next) {
-  <span class="k">if</span> (req.actor?.type === <span class="s">"user"</span>) <span class="k">return</span> next();
-  <span class="k">return</span> res.status(<span class="s">403</span>).json({ <span class="c">/* 「人間専用です」 */</span> });
-}</pre>
-  </div>
-  <p class="note">いつもの Web サービスと同じ流れ。今回は勉強用に一番シンプルな形にしてある（本番では Cookie などを使う）。</p>
-</section>
-
-<!-- 5. agentAuth -->
-<section class="slide">
-  <div class="eyebrow">ポイント① 入口は人間と AI で分ける ― AI 側</div>
-  <h2>AI の入口 <small>― ログインなし。合鍵（アクセスキー）で入る</small></h2>
-  <div class="shot">
-    <div class="file"><span class="dot"></span>api/auth/agentAuth.mjs</div>
-    <pre><span class="c">// AI は人間と別の入口から入る。ログインではなく、</span>
-<span class="c">// 事前に渡してある合鍵（アクセスキー）を見せてもらう方式。</span>
-<span class="c">//</span>
-<span class="c">// 本番では鍵を DB に保存する:</span>
-<span class="c">//   - 1 人ずつ発行できる（誰の鍵か分かる → 記録が残せる）</span>
-<span class="c">//   - 使わせたくなくなったら、その鍵だけ止められる</span>
-<span class="k">const</span> AGENT_KEYS = (process.env.AGENT_API_KEYS ?? <span class="s">"agent-demo-key"</span>)
-  .split(<span class="s">","</span>).map((s) =&gt; s.trim()).filter(Boolean);
-
-<span class="k">export function</span> <span class="fn">resolveAgentToken</span>(token) {
-  <span class="k">return</span> AGENT_KEYS.includes(token) ? { key: token } : <span class="k">null</span>;
-}</pre>
-  </div>
-  <p class="note">入口を分けておくと、<b>「AI の鍵だけ止める」「AI の利用だけ記録する」</b>が簡単にできる。</p>
-</section>
-
-<!-- 6. actor middleware -->
-<section class="slide">
-  <div class="eyebrow">ポイント① 入口は人間と AI で分ける ― 見分け方</div>
-  <h2>入口で「人間か AI か」を見分ける</h2>
-  <div class="shot">
-    <div class="file"><span class="dot"></span>api/server.mjs</div>
-    <pre><span class="c">// 見せられたトークンを確認して、「誰が来たか」を決める</span>
-app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
-  <span class="k">const</span> token = (req.headers.authorization ?? <span class="s">""</span>)
-    .replace(<span class="s">/^Bearer\s+/i</span>, <span class="s">""</span>);
-
-  <span class="k">const</span> session = resolveUserToken(token);      <span class="c">// ① 入館証？ → 人間</span>
-<span class="hl">  <span class="k">if</span> (session) { req.actor = { type: <span class="s">"user"</span>, name: session.name }; <span class="k">return</span> next(); }</span>
-
-  <span class="k">const</span> agent = resolveAgentToken(token);       <span class="c">// ② 合鍵？ → AI</span>
-<span class="hl">  <span class="k">if</span> (agent) { req.actor = { type: <span class="s">"agent"</span> }; <span class="k">return</span> next(); }</span>
-
-  res.status(<span class="s">401</span>).json({ <span class="c">/* どちらでもない → お断り */</span> });
-});</pre>
-  </div>
-  <p class="note">見分けるのは<b>入口の 1 箇所だけ</b>。後ろの係たちは「人間か AI か」の結果を使うだけでいい。</p>
-</section>
-
-<!-- 7. registry -->
-<section class="slide">
-  <div class="eyebrow">ポイント② 許可はリストで（今日いちばん大事）</div>
-  <h2>AI に許す操作は「リストに書いたものだけ」</h2>
-  <div class="shot">
-    <div class="file"><span class="dot"></span>api/agentRegistry.mjs</div>
-    <pre><span class="c">// AI がやっていいことリスト。ここに書いた API だけ AI が使える</span>
-<span class="k">export const</span> AGENT_APIS = [
-  { name: <span class="s">"list_users"</span>,  method: <span class="s">"GET"</span>,  path: <span class="s">"/api/users"</span> },
-  { name: <span class="s">"get_user"</span>,    method: <span class="s">"GET"</span>,  path: <span class="s">"/api/users/:id"</span> },
-  { name: <span class="s">"create_user"</span>, method: <span class="s">"POST"</span>, path: <span class="s">"/api/users"</span> },
-<span class="hl">  <span class="c">// 削除・更新はわざと書かない = 人間にしかさせない</span></span>
-];
-
-<span class="k">export const</span> <span class="fn">forAgent</span> = (name) =&gt; (req, res, next) =&gt; {
-  <span class="k">if</span> (req.actor?.type === <span class="s">"user"</span>) <span class="k">return</span> next();  <span class="c">// 人間はいつでも OK</span>
-  <span class="k">if</span> (AGENT_APIS.some((a) =&gt; a.name === name)) <span class="k">return</span> next();
-  <span class="k">return</span> res.status(<span class="s">403</span>).json({ <span class="c">/* 「AI には開放していません」 */</span> });
-};</pre>
-  </div>
-  <p class="note">「この辺は全部 OK」とざっくり開けると、<b>開けたくないものまで開いてしまう事故</b>が起きる（実体験）。1 個ずつ書く方式なら、この表を見るだけで「AI にできること」が全部わかる。</p>
-</section>
-
-<!-- 8. permission matrix -->
-<section class="slide">
-  <div class="eyebrow">ポイント② の結果</div>
-  <h2>同じ API でも、できることが違う</h2>
-  <div class="tblwrap">
-  <table>
-    <tr><th>操作</th><th>人間</th><th>AI</th></tr>
-    <tr><td>ユーザー一覧を見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
-    <tr><td>ユーザーを 1 人見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
-    <tr><td>ユーザーを追加する</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
-    <tr><td>ユーザーを更新する</td><td class="yes">✔</td><td class="no2">✘ 人間専用</td></tr>
-    <tr><td>ユーザーを削除する</td><td class="yes">✔</td><td class="no2">✘ 人間専用</td></tr>
-    <tr><td>「AI にできること」の一覧を見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
-  </table>
-  </div>
-  <p class="note">削除・更新はリストに書いていないので、AI は頼まれてもできない。しかも AI は<b>「自分に何ができるか」を自分で確認できる</b>（一番下の API）。</p>
-</section>
-
-<!-- 9. controller/service/repository -->
-<section class="slide">
-  <div class="eyebrow">ポイント③ 係を分けて小さく保つ</div>
-  <h2>1 つのお願いが 3 つの係を通る <small>― 「ユーザー追加」の例</small></h2>
+  <div class="eyebrow">作るもの① まず、ふつうの API サーバー</div>
+  <h2>土台を作る <small>― 「ユーザー追加」が 3 つの係を通る</small></h2>
   <div class="chain">
     <div>
       <div class="lbl">窓口 ― 受けて、渡して、返事するだけ</div>
@@ -294,9 +183,120 @@ app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
   </div>
 </section>
 
+<!-- 5. userAuth (build 2) -->
+<section class="slide">
+  <div class="eyebrow">作るもの② 入口（受付） ― 人間側</div>
+  <h2>人間の入口 <small>― ログインして入館証をもらう</small></h2>
+  <div class="shot">
+    <div class="file"><span class="dot"></span>api/auth/userAuth.mjs</div>
+    <pre><span class="c">// ログイン成功 → 入館証（usr_ で始まるトークン）を発行</span>
+<span class="k">export function</span> <span class="fn">login</span>(login_id, password) {
+  <span class="k">const</span> found = LOGIN_USERS.find((u) =&gt;
+    u.login_id === login_id &amp;&amp; u.password === password);
+  <span class="k">if</span> (!found) <span class="k">return</span> <span class="k">null</span>;
+<span class="hl">  <span class="k">const</span> token = <span class="s">"usr_"</span> + randomUUID();</span>
+  sessions.set(token, { login_id: found.login_id, name: found.name });
+  <span class="k">return</span> token;
+}
+
+<span class="c">// 「人間だけ」の扉。AI が来たら断る（削除・更新など）</span>
+<span class="k">export function</span> <span class="fn">userOnly</span>(req, res, next) {
+  <span class="k">if</span> (req.actor?.type === <span class="s">"user"</span>) <span class="k">return</span> next();
+  <span class="k">return</span> res.status(<span class="s">403</span>).json({ <span class="c">/* 「人間専用です」 */</span> });
+}</pre>
+  </div>
+  <p class="note">いつもの Web サービスと同じ流れ。今回は勉強用に一番シンプルな形にしてある（本番では Cookie などを使う）。</p>
+</section>
+
+<!-- 5. agentAuth -->
+<section class="slide">
+  <div class="eyebrow">作るもの② 入口（受付） ― AI 側</div>
+  <h2>AI の入口 <small>― ログインなし。合鍵（アクセスキー）で入る</small></h2>
+  <div class="shot">
+    <div class="file"><span class="dot"></span>api/auth/agentAuth.mjs</div>
+    <pre><span class="c">// AI は人間と別の入口から入る。ログインではなく、</span>
+<span class="c">// 事前に渡してある合鍵（アクセスキー）を見せてもらう方式。</span>
+<span class="c">//</span>
+<span class="c">// 本番では鍵を DB に保存する:</span>
+<span class="c">//   - 1 人ずつ発行できる（誰の鍵か分かる → 記録が残せる）</span>
+<span class="c">//   - 使わせたくなくなったら、その鍵だけ止められる</span>
+<span class="k">const</span> AGENT_KEYS = (process.env.AGENT_API_KEYS ?? <span class="s">"agent-demo-key"</span>)
+  .split(<span class="s">","</span>).map((s) =&gt; s.trim()).filter(Boolean);
+
+<span class="k">export function</span> <span class="fn">resolveAgentToken</span>(token) {
+  <span class="k">return</span> AGENT_KEYS.includes(token) ? { key: token } : <span class="k">null</span>;
+}</pre>
+  </div>
+  <p class="note">入口を分けておくと、<b>「AI の鍵だけ止める」「AI の利用だけ記録する」</b>が簡単にできる。</p>
+</section>
+
+<!-- 6. actor middleware -->
+<section class="slide">
+  <div class="eyebrow">作るもの② 入口（受付） ― 見分け方</div>
+  <h2>入口で「人間か AI か」を見分ける</h2>
+  <div class="shot">
+    <div class="file"><span class="dot"></span>api/server.mjs</div>
+    <pre><span class="c">// 見せられたトークンを確認して、「誰が来たか」を決める</span>
+app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
+  <span class="k">const</span> token = (req.headers.authorization ?? <span class="s">""</span>)
+    .replace(<span class="s">/^Bearer\s+/i</span>, <span class="s">""</span>);
+
+  <span class="k">const</span> session = resolveUserToken(token);      <span class="c">// ① 入館証？ → 人間</span>
+<span class="hl">  <span class="k">if</span> (session) { req.actor = { type: <span class="s">"user"</span>, name: session.name }; <span class="k">return</span> next(); }</span>
+
+  <span class="k">const</span> agent = resolveAgentToken(token);       <span class="c">// ② 合鍵？ → AI</span>
+<span class="hl">  <span class="k">if</span> (agent) { req.actor = { type: <span class="s">"agent"</span> }; <span class="k">return</span> next(); }</span>
+
+  res.status(<span class="s">401</span>).json({ <span class="c">/* どちらでもない → お断り */</span> });
+});</pre>
+  </div>
+  <p class="note">見分けるのは<b>入口の 1 箇所だけ</b>。後ろの係たちは「人間か AI か」の結果を使うだけでいい。</p>
+</section>
+
+<!-- 7. registry -->
+<section class="slide">
+  <div class="eyebrow">作るもの③ AI がやっていいことリスト（今日いちばん大事）</div>
+  <h2>AI に許す操作は「リストに書いたものだけ」</h2>
+  <div class="shot">
+    <div class="file"><span class="dot"></span>api/agentRegistry.mjs</div>
+    <pre><span class="c">// AI がやっていいことリスト。ここに書いた API だけ AI が使える</span>
+<span class="k">export const</span> AGENT_APIS = [
+  { name: <span class="s">"list_users"</span>,  method: <span class="s">"GET"</span>,  path: <span class="s">"/api/users"</span> },
+  { name: <span class="s">"get_user"</span>,    method: <span class="s">"GET"</span>,  path: <span class="s">"/api/users/:id"</span> },
+  { name: <span class="s">"create_user"</span>, method: <span class="s">"POST"</span>, path: <span class="s">"/api/users"</span> },
+<span class="hl">  <span class="c">// 削除・更新はわざと書かない = 人間にしかさせない</span></span>
+];
+
+<span class="k">export const</span> <span class="fn">forAgent</span> = (name) =&gt; (req, res, next) =&gt; {
+  <span class="k">if</span> (req.actor?.type === <span class="s">"user"</span>) <span class="k">return</span> next();  <span class="c">// 人間はいつでも OK</span>
+  <span class="k">if</span> (AGENT_APIS.some((a) =&gt; a.name === name)) <span class="k">return</span> next();
+  <span class="k">return</span> res.status(<span class="s">403</span>).json({ <span class="c">/* 「AI には開放していません」 */</span> });
+};</pre>
+  </div>
+  <p class="note">「この辺は全部 OK」とざっくり開けると、<b>開けたくないものまで開いてしまう事故</b>が起きる（実体験）。1 個ずつ書く方式なら、この表を見るだけで「AI にできること」が全部わかる。</p>
+</section>
+
+<!-- 8. permission matrix -->
+<section class="slide">
+  <div class="eyebrow">作るもの③ ができると</div>
+  <h2>同じ API でも、できることが違う</h2>
+  <div class="tblwrap">
+  <table>
+    <tr><th>操作</th><th>人間</th><th>AI</th></tr>
+    <tr><td>ユーザー一覧を見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
+    <tr><td>ユーザーを 1 人見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
+    <tr><td>ユーザーを追加する</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
+    <tr><td>ユーザーを更新する</td><td class="yes">✔</td><td class="no2">✘ 人間専用</td></tr>
+    <tr><td>ユーザーを削除する</td><td class="yes">✔</td><td class="no2">✘ 人間専用</td></tr>
+    <tr><td>「AI にできること」の一覧を見る</td><td class="yes">✔</td><td class="yes">✔ リストにある</td></tr>
+  </table>
+  </div>
+  <p class="note">削除・更新はリストに書いていないので、AI は頼まれてもできない。しかも AI は<b>「自分に何ができるか」を自分で確認できる</b>（一番下の API）。</p>
+</section>
+
 <!-- 10. MCP layer -->
 <section class="slide">
-  <div class="eyebrow">ポイント④ AI の動きは「説明文」で決まる</div>
+  <div class="eyebrow">作るもの④ AI への説明係（MCP 本体）</div>
   <h2>MCP は「AI 向けの取扱説明書」つきの窓口</h2>
   <div class="shot">
     <div class="file"><span class="dot"></span>mcp/index.mjs</div>
@@ -319,7 +319,7 @@ app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
 
 <!-- 11. deploy -->
 <section class="slide">
-  <div class="eyebrow">ポイント⑤ 届け方</div>
+  <div class="eyebrow">作るもの⑤ 配る仕組み</div>
   <h2>置き場所が違う <small>― API はサーバーに、説明係は各自の PC に</small></h2>
   <div class="two">
     <div>
