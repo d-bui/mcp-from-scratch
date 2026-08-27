@@ -339,9 +339,65 @@ mcp.mount_http()   <span class="c"># → http://localhost:8000/mcp</span></pre>
   <ul class="pts">
     <li>main.py <b>1 ファイル（約 130 行）</b>に全部入っている — 読めば分かる</li>
     <li>コード: <code>github.com/d-bui/mcp-from-scratch</code><small>（README に動かし方あり）</small></li>
+    <li>この後ろに<b>付録（手順書）3 枚</b> — スライドがそのまま手元ガイドになります</li>
     <li>質問どうぞ！</li>
   </ul>
   <p class="note">参考: MCP 自体はオープン規格（modelcontextprotocol.io）で、ChatGPT / Cursor / Gemini など他の AI クライアントからも同じサーバーにつなげる。<code>.mcpb</code> だけが Claude Desktop 用の配布形式。</p>
+</section>
+
+<!-- appendix A: run the server -->
+<section class="slide">
+  <div class="eyebrow">付録① 手順書 ― サーバーを動かす</div>
+  <h2>クローンして起動するまで <small>― 3 分</small></h2>
+  <div class="shot">
+    <div class="file"><span class="dot"></span>ターミナル</div>
+    <pre>$ git clone https://github.com/d-bui/mcp-from-scratch
+$ cd mcp-from-scratch
+$ python3 -m venv venv
+$ ./venv/bin/pip install -r requirements.txt
+$ ./venv/bin/uvicorn main:app --port 8000
+<span class="c"># → MCP エンドポイント: http://localhost:8000/mcp</span>
+<span class="c"># デモの人間ユーザー: alice / demo ／ AI 用の合鍵: agent-demo-key</span></pre>
+  </div>
+  <p class="note">動作確認は README の curl 例で。人間トークンで削除が 200、AI の合鍵で削除が 403 になれば正常。</p>
+</section>
+
+<!-- appendix B: connect from clients -->
+<section class="slide">
+  <div class="eyebrow">付録② 手順書 ― AI クライアントからつなぐ</div>
+  <h2>つなぎ方 3 通り <small>― どれか 1 つでいい</small></h2>
+  <div class="chain">
+    <div>
+      <div class="lbl">Claude Desktop ― コマンド不要</div>
+      <div class="shot"><pre>1. dist/users-mcp-local.mcpb をダブルクリック
+2. フォームに URL（既定のまま）と合鍵 agent-demo-key を入力 → 完了</pre></div>
+    </div>
+    <div>
+      <div class="lbl">Claude Code ― 1 コマンド（リポジトリ内なら .mcp.json が自動検出されるので不要）</div>
+      <div class="shot"><pre>$ claude mcp add --transport http users http://localhost:8000/mcp \
+    --header <span class="s">"Authorization: Bearer agent-demo-key"</span></pre></div>
+    </div>
+    <div>
+      <div class="lbl">Cursor ― .cursor/mcp.json に書くだけ</div>
+      <div class="shot"><pre>{ <span class="s">"mcpServers"</span>: { <span class="s">"users"</span>: { <span class="s">"url"</span>: <span class="s">"http://localhost:8000/mcp"</span>,
+    <span class="s">"headers"</span>: { <span class="s">"Authorization"</span>: <span class="s">"Bearer agent-demo-key"</span> } } } }</pre></div>
+    </div>
+  </div>
+  <p class="note">つないだら「ユーザー一覧見せて」で動作確認。「1 番を削除して」と頼むと断られるのが正しい挙動。</p>
+</section>
+
+<!-- appendix C: build the mcpb -->
+<section class="slide">
+  <div class="eyebrow">付録③ 手順書 ― 配布用 .mcpb を作る</div>
+  <h2>.mcpb は 2 コマンドで作れる</h2>
+  <div class="shot">
+    <div class="file"><span class="dot"></span>ターミナル</div>
+    <pre>$ cd mcpb &amp;&amp; npm install
+$ npx @anthropic-ai/mcpb pack . ../dist/users-mcp-local.mcpb
+<span class="c"># 中身: manifest.json + mcp-remote（stdio → HTTP の橋渡し）だけ</span>
+<span class="c"># HTTP 型の MCP はそのまま .mcpb に入らないため、橋渡しを詰めている</span></pre>
+  </div>
+  <p class="note">受け取った人の手順は「ダブルクリック → フォームに URL と合鍵」だけ（付録②）。合鍵は OS の安全な場所に保存される。詳しい仕組みは README と manifest.json を参照。</p>
 </section>
 
 <script>
