@@ -113,6 +113,25 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
   <div class="author">発表者：ミズン ／ コードは GitHub で共有します</div>
 </section>
 
+<!-- 1b. what is mcp: toolbox -->
+<section class="slide">
+  <div class="eyebrow">そもそも</div>
+  <h2>MCP サーバー = AI に渡す「道具箱」</h2>
+  <ul class="pts">
+    <li>道具（ツール）1 つ = AI にさせたいこと 1 つ<br><small>それぞれに「名前・説明文・入力の形」が付いている</small></li>
+    <li>AI は<b>説明文を読んで</b>、どの道具をいつ使うか自分で決める</li>
+    <li>道具を渡していない操作は、AI は<b>そもそもできない</b><small>（今日の話の出発点）</small></li>
+  </ul>
+  <div class="pill-row" style="margin-top:2.2vh">
+    <span class="pill">一覧を見る <code>list_users</code></span>
+    <span class="pill">1 人を見る <code>get_user</code></span>
+    <span class="pill">追加する <code>create_user</code></span>
+    <span class="pill">できることを聞く <code>list_agent_apis</code></span>
+    <span class="pill">自己紹介 <code>server_info</code></span>
+  </div>
+  <p class="note">今日のデモの道具箱はこの 5 つ（削除の道具はわざと入れない）。<b>この道具箱を作って AI に渡す係</b>が、これから作る MCP サーバー。</p>
+</section>
+
 <!-- 2. Zentaizou -->
 <section class="slide">
   <div class="eyebrow">全体像</div>
@@ -297,7 +316,7 @@ app.use(<span class="s">"/api"</span>, (req, res, next) =&gt; {
 <!-- 10. MCP layer -->
 <section class="slide">
   <div class="eyebrow">作るもの④ AI への説明係（MCP 本体）</div>
-  <h2>MCP は「AI 向けの取扱説明書」つきの窓口</h2>
+  <h2>道具箱の中身を 1 つずつ作る <small>― tool( ) 1 回 = 道具 1 つ</small></h2>
   <div class="shot">
     <div class="file"><span class="dot"></span>mcp/index.mjs</div>
     <pre>tool(server, <span class="s">"create_user"</span>, {
