@@ -5,3 +5,4 @@ dist/
 slides/deck-artifact.html
 venv/
 __pycache__/
+.mcp.json

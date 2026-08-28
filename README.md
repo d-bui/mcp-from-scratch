@@ -8,7 +8,7 @@ FastAPI 製の小さなユーザー管理 API に、**AI（Claude など）向�
 mcp-from-scratch/
 ├── main.py            # 本体（API + 認証 + MCP、これだけ読めば全部わかる）
 ├── requirements.txt
-├── .mcp.json          # Claude Code 用の接続設定（URL + ヘッダ）
+├── .mcp.json.example  # Claude Code 用の接続設定例（コピーして使う）
 ├── mcpb/              # 任意: Claude Desktop 用 .mcpb（橋渡しだけの小さな拡張）
 └── slides/index.html  # 発表スライド（ブラウザで開く）
 ```
@@ -61,7 +61,10 @@ curl -s -X DELETE localhost:8000/users/2 -H "Authorization: Bearer agent-demo-ke
 ## AI クライアントからつなぐ
 
 ```bash
-# Claude Code（このフォルダで開けば .mcp.json が自動検出されるので不要）
+# Claude Code ― 設定例をコピーすれば、このフォルダで開くだけで自動検出される
+cp .mcp.json.example .mcp.json
+
+# （コピーせずコマンドで登録する場合はこちら）
 claude mcp add --transport http users http://localhost:8000/mcp \
   --header "Authorization: Bearer agent-demo-key"
 ```
