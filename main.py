@@ -1,11 +1,12 @@
 # main.py — FastAPI + fastapi-mcp で作る MCP サーバーデモ（1 ファイル・ローカル専用）
 #
-# 読む順（スライドと同じ、上から）:
-#   読む① データと鍵    … デモデータ + 人間の ID/パスワード + AI 用の合鍵（PAT）
-#   読む② 受付と門番    … 入口で「人間か AI か」を見分け、破壊的操作は人間専用に
-#   読む③ ふつうの CRUD … ただの FastAPI（docstring があとで効く）
-#   読む④ MCP 化        … リストに書いた操作だけ AI の道具になる。説明文は docstring から自動生成
-#   読む⑤ 動かしてつなぐ … uvicorn で起動 → ローカル URL（/mcp）につなぐ。.mcpb は任意（mcpb/）
+# 前半は「ふつうの Web アプリ」、後半に「AI のための追加」をまとめてある:
+#   読む① データと人間のログイン … デモデータ + ログイン → セッショントークン
+#   読む② 受付と門番            … 入口で「人間か AI か」を見分け、破壊的操作は人間専用に
+#   読む③ ふつうの CRUD          … ただの FastAPI（docstring があとで効く）
+#   ── ここから AI のための追加 ──
+#   読む④ AI の合鍵と MCP 化     … 合鍵 1 行 + リストに書いた操作だけ AI の道具になる
+#   読む⑤ 動かしてつなぐ         … uvicorn で起動 → ローカル URL（/mcp）につなぐ。.mcpb は任意（mcpb/）
 #
 # 起動:  uvicorn main:app --port 8000
 # 接続:  Claude Code → claude mcp add --transport http users \
@@ -18,7 +19,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi_mcp import AuthConfig, FastApiMCP
 from pydantic import BaseModel
 
-# ── 読む① データと鍵 ───────────────────────────────────────────
+# ── 読む① データと人間のログイン ────────────────────────────────
 # デモデータはメモリ保存。
 users = [
     {"id": 1, "name": "佐藤 太郎", "email": "sato@example.com"},
@@ -26,30 +27,9 @@ users = [
     {"id": 3, "name": "田中 一郎", "email": "tanaka@example.com"},
 ]
 
-# 鍵は 2 種類 — 人間: ログイン → セッショントークン（usr_...）／
-# AI: 事前発行の合鍵（PAT）。デモは固定 1 本。実務では DB にハッシュ保存して発行・失効を管理
+# 人間はログインしてセッショントークン（usr_...）をもらう — いつもの Web と同じ
 LOGIN_USERS = {"alice": "demo"}
-AGENT_KEYS = {"agent-demo-key"}
 sessions: dict[str, str] = {}  # token -> login_id
-
-
-# ── 読む② 受付と門番 ───────────────────────────────────────────
-def get_actor(authorization: str | None = Header(None)) -> dict:
-    """Bearer トークンを見て「人間か AI か」を確定する（入口は 1 箇所）。"""
-    token = (authorization or "").removeprefix("Bearer ").strip()
-    if token in sessions:
-        return {"type": "user", "login_id": sessions[token]}
-    if token in AGENT_KEYS:
-        return {"type": "agent"}
-    raise HTTPException(401, "有効なトークンがありません")
-
-
-def user_only(actor: dict = Depends(get_actor)) -> dict:
-    """門番: 破壊的操作に付ける。AI の合鍵なら 403。"""
-    if actor["type"] != "user":
-        raise HTTPException(403, "この操作は人間ユーザー専用です")
-    return actor
-
 
 app = FastAPI(title="Users API")
 
@@ -67,6 +47,24 @@ def login(body: LoginBody):
     token = "usr_" + secrets.token_hex(16)
     sessions[token] = body.login_id
     return {"token": token}
+
+
+# ── 読む② 受付と門番 ───────────────────────────────────────────
+def get_actor(authorization: str | None = Header(None)) -> dict:
+    """Bearer トークンを見て「人間か AI か」を確定する（入口は 1 箇所）。"""
+    token = (authorization or "").removeprefix("Bearer ").strip()
+    if token in sessions:
+        return {"type": "user", "login_id": sessions[token]}
+    if token in AGENT_KEYS:  # AI 用の合鍵。定義は下の「AI のための追加」（読む④）
+        return {"type": "agent"}
+    raise HTTPException(401, "有効なトークンがありません")
+
+
+def user_only(actor: dict = Depends(get_actor)) -> dict:
+    """門番: 破壊的操作に付ける。AI の合鍵なら 403。"""
+    if actor["type"] != "user":
+        raise HTTPException(403, "この操作は人間ユーザー専用です")
+    return actor
 
 
 # ── 読む③ ふつうの CRUD（docstring = 読む④ で AI への説明文になる）─
@@ -108,7 +106,12 @@ def delete_user(id: int, actor: dict = Depends(user_only)):
     raise HTTPException(404, "そのユーザーはいません")
 
 
-# ── 読む④ ここで MCP になる ─────────────────────────────────────
+# ════ ここから AI のための追加 ══════════════════════════════════
+# ── 読む④ AI の合鍵と MCP 化 ───────────────────────────────────
+# AI は事前発行の合鍵（PAT）で入る。デモは固定 1 本。
+# 実務では DB にハッシュ保存して発行・失効・記録を管理する。
+AGENT_KEYS = {"agent-demo-key"}
+
 # include_operations（やっていいことリスト）に書いた操作だけが AI の道具箱に入り、
 # 説明文は各エンドポイントの docstring から自動生成される。
 # さらに /mcp 自体にも合鍵チェック（AuthConfig）— リスト外 + 認証の二段構え。

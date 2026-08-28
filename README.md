@@ -17,10 +17,10 @@ mcp-from-scratch/
 
 | 読む順 | main.py の場所 | 内容 |
 |---|---|---|
-| ① データと鍵 | `users` / `LOGIN_USERS` / `AGENT_KEYS` | デモデータと 2 種類の鍵（人間・AI） |
+| ① データと人間のログイン | `users` / `LOGIN_USERS` / `login()` | ふつうのログイン（セッショントークン発行） |
 | ② 受付と門番 | `get_actor()` / `user_only()` | 入口で見分け、破壊的操作は人間専用に |
 | ③ ふつうの CRUD | `@app.get("/users")` など | ただの FastAPI（docstring があとで効く） |
-| ④ MCP 化 | `FastApiMCP(app, include_operations=[...])` | リストに書いた操作だけ AI の道具に。説明文は docstring から自動生成 |
+| ④ AI の合鍵と MCP 化 | `AGENT_KEYS` / `FastApiMCP(...)` | ここからが AI のための追加。リストに書いた操作だけ道具に |
 | ⑤ 動かしてつなぐ | `mcp.mount_http()` → `/mcp` | ローカル URL でつなぐ（.mcpb は任意） |
 
 ## 権限マトリクス
@@ -91,8 +91,8 @@ npx @anthropic-ai/mcpb pack . ../dist/users-mcp-local.mcpb
 
 `slides/index.html` をブラウザで開くとそのまま発表できる（← → キーで移動、
 本編 10 枚 + 付録 3 枚、10 分発表向け、オフライン動作）。
-**コードリーディング形式**: なぜ作るか → main.py の目次 → 読む①②データと鍵・受付と門番 →
-③ふつうの CRUD → ④MCP 化（docstring のたね明かし）→ ⑤動かしてつなぐ → まとめ。
+**コードリーディング形式**: なぜ作るか → main.py の目次 → 読む①②ログインと受付 →
+③ふつうの CRUD → ④AI の合鍵と MCP 化（docstring のたね明かし）→ ⑤動かしてつなぐ → まとめ。
 そのあとに**付録（手順書 3 枚: 起動・接続・.mcpb 作成）** — 発表はまとめで終了、
 付録は配布後に読者が自分で手を動かすためのガイド（.mcpb の話は付録に寄せてある）。
 

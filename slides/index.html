@@ -99,10 +99,10 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
   <div class="kicker">勉強会 ／ コードリーディング</div>
   <h1>FastAPI で<br>シンプルな MCP サーバーを作る<br><small style="font-size:.45em;color:var(--muted)">― main.py を上から読んでいく</small></h1>
   <div class="pill-row">
-    <span class="pill">読む① データと鍵</span>
+    <span class="pill">読む① データとログイン</span>
     <span class="pill">読む② 受付と門番</span>
     <span class="pill">読む③ ふつうの CRUD</span>
-    <span class="pill">読む④ MCP 化</span>
+    <span class="pill">読む④ 合鍵と MCP 化</span>
     <span class="pill">読む⑤ 動かしてつなぐ</span>
   </div>
   <div class="author">発表者：ミズン ／ コードは GitHub で共有します</div>
@@ -141,38 +141,43 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
 <section class="slide">
   <div class="eyebrow">全体の地図</div>
   <h2>main.py は 5 つのブロック <small>― 役割で見る</small></h2>
-  <div class="stack" style="gap:1.4vh">
-    <div class="dbox human"><span class="t">読む① データと鍵</span> <span class="d">デモデータと 2 種類の鍵 — 人間の ID/パスワード、AI の合鍵（PAT）</span></div>
-    <div class="dbox agent"><span class="t">読む② 受付と門番</span> <span class="d">入口で「人間か AI か」を見分け、危ない操作は人間専用にする</span></div>
-    <div class="dbox"><span class="t">読む③ ふつうの CRUD</span> <span class="d">ただの FastAPI エンドポイント — ここまでは見慣れた Web アプリ</span></div>
-    <div class="dbox reg"><span class="t">読む④ MCP 化</span> <span class="d">リストに書いた操作だけ AI の道具になる。説明文は docstring から自動生成</span></div>
+  <div class="stack" style="gap:1.1vh">
+    <div class="eyebrow" style="margin:0">前半 ― ふつうの Web アプリ</div>
+    <div class="dbox human"><span class="t">読む① データと人間のログイン</span> <span class="d">デモデータと、ログイン → セッショントークン（いつもの Web と同じ）</span></div>
+    <div class="dbox human"><span class="t">読む② 受付と門番</span> <span class="d">入口で「人間か AI か」を見分け、危ない操作は人間専用にする</span></div>
+    <div class="dbox human"><span class="t">読む③ ふつうの CRUD</span> <span class="d">ただの FastAPI エンドポイント（docstring があとで効く）</span></div>
+    <div class="eyebrow" style="margin:1.2vh 0 0; color:var(--ok)">後半 ― ここから AI のための追加</div>
+    <div class="dbox reg"><span class="t">読む④ AI の合鍵と MCP 化</span> <span class="d">合鍵 1 行 + リストに書いた操作だけ AI の道具になる</span></div>
     <div class="dbox mcp"><span class="t">読む⑤ 動かしてつなぐ</span> <span class="d">uvicorn で起動 → AI は URL（/mcp）につなぐだけ</span></div>
   </div>
-  <p class="note">ほとんどは見慣れた Web アプリの作りで、<b>AI のための追加は鍵 1 行とリスト数行だけ</b>。この順に上からコードを読んでいく。</p>
+  <p class="note">AI のための追加は<b>ファイル後半にまとまっている</b>。前半だけなら、ただの「ログインつき Web アプリ」として動く。この順に上から読む。</p>
 </section>
 
 <!-- 5. read 2: reception and gatekeeper -->
 <section class="slide">
-  <div class="eyebrow">読む①② データと鍵 → 受付と門番</div>
-  <h2>鍵は 2 種類。入口で見分けて、門番が守る</h2>
+  <div class="eyebrow">読む①② ふつうの Web アプリ ― ログインと受付</div>
+  <h2>前半は、ただの「ログインつき Web アプリ」</h2>
   <div class="shot">
-    <div class="file"><span class="dot"></span>main.py ― 鍵と受付と門番</div>
-    <pre><span class="hl">LOGIN_USERS = {<span class="s">"alice"</span>: <span class="s">"demo"</span>}      <span class="c"># 人間: ログインして入る</span></span>
-<span class="hl">AGENT_KEYS = {<span class="s">"agent-demo-key"</span>}      <span class="c"># AI: 事前に渡してある合鍵（PAT）</span></span>
+    <div class="file"><span class="dot"></span>main.py ― ログインと受付</div>
+    <pre>LOGIN_USERS = {<span class="s">"alice"</span>: <span class="s">"demo"</span>}      <span class="c"># 人間: ログインして入館証をもらう</span>
+sessions: dict[str, str] = {}
+
+@app.post(<span class="s">"/login"</span>, operation_id=<span class="s">"login"</span>)
+<span class="k">def</span> <span class="fn">login</span>(body: LoginBody):
+    <span class="s">"""ログイン。成功するとセッショントークンを返す（人間の入口）。"""</span>
+    ...
+    token = <span class="s">"usr_"</span> + secrets.token_hex(<span class="s">16</span>)
 
 <span class="k">def</span> <span class="fn">get_actor</span>(authorization: str | <span class="k">None</span> = Header(<span class="k">None</span>)) -&gt; dict:
     <span class="s">"""Bearer トークンを見て「人間か AI か」を確定する（入口は 1 箇所）。"""</span>
-    token = (authorization <span class="k">or</span> <span class="s">""</span>).removeprefix(<span class="s">"Bearer "</span>).strip()
-<span class="hl">    <span class="k">if</span> token <span class="k">in</span> sessions:   <span class="k">return</span> {<span class="s">"type"</span>: <span class="s">"user"</span>, ...}  <span class="c"># ① 入館証？→人間</span></span>
-<span class="hl">    <span class="k">if</span> token <span class="k">in</span> AGENT_KEYS: <span class="k">return</span> {<span class="s">"type"</span>: <span class="s">"agent"</span>}      <span class="c"># ② 合鍵？→AI</span></span>
+<span class="hl">    <span class="k">if</span> token <span class="k">in</span> sessions:   <span class="k">return</span> {<span class="s">"type"</span>: <span class="s">"user"</span>, ...}  <span class="c"># 入館証？→人間</span></span>
+<span class="hl">    <span class="k">if</span> token <span class="k">in</span> AGENT_KEYS: <span class="k">return</span> {<span class="s">"type"</span>: <span class="s">"agent"</span>}      <span class="c"># 合鍵？→AI（定義は読む④）</span></span>
     <span class="k">raise</span> HTTPException(<span class="s">401</span>, <span class="s">"有効なトークンがありません"</span>)
 
 <span class="k">def</span> <span class="fn">user_only</span>(actor: dict = Depends(get_actor)) -&gt; dict:
-    <span class="s">"""門番: 破壊的操作に付ける。AI の合鍵なら 403。"""</span>
-    <span class="k">if</span> actor[<span class="s">"type"</span>] != <span class="s">"user"</span>:
-        <span class="k">raise</span> HTTPException(<span class="s">403</span>, <span class="s">"この操作は人間ユーザー専用です"</span>)</pre>
+    <span class="s">"""門番: 破壊的操作に付ける。AI の合鍵なら 403。"""</span></pre>
   </div>
-  <p class="note">人間側のログイン（<code>login()</code> → 入館証）はいつもの Web と同じ作りなので割愛。入口を分けておくと<b>「AI の鍵だけ止める・記録する」が簡単</b>。削除エンドポイントには <code>Depends(user_only)</code> を付けるだけ。</p>
+  <p class="note">トークン発行も 401 も、いつもの Web と同じ作り。<b>唯一の伏線は、受付が「AI の合鍵」も見ること</b>（鍵そのものは読む④で登場）。削除には <code>Depends(user_only)</code> を付けるだけ。</p>
 </section>
 
 <!-- 6. read 3: plain crud -->
@@ -198,11 +203,13 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
 
 <!-- 7. read 4: becomes mcp -->
 <section class="slide">
-  <div class="eyebrow">読む④ 最後の数行で MCP になる（今日いちばん大事）</div>
-  <h2>リストに書いた操作だけが、AI の道具箱に入る</h2>
+  <div class="eyebrow">読む④ ここから AI のための追加（今日いちばん大事）</div>
+  <h2>合鍵 1 行 + リスト数行で、AI の道具箱になる</h2>
   <div class="shot">
-    <div class="file"><span class="dot"></span>main.py ― MCP 化</div>
-    <pre>mcp = FastApiMCP(
+    <div class="file"><span class="dot"></span>main.py ― AI のための追加</div>
+    <pre><span class="hl">AGENT_KEYS = {<span class="s">"agent-demo-key"</span>}   <span class="c"># AI 用の合鍵（PAT）— 追加はここから</span></span>
+
+mcp = FastApiMCP(
     app,
     name=<span class="s">"Users MCP"</span>,
 <span class="hl">    include_operations=[</span>
