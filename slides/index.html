@@ -249,12 +249,11 @@ mcp.mount_http()   <span class="c"># → http://localhost:8000/mcp</span></pre>
   <h2>起動したら、AI は「つなぐだけ」</h2>
   <ul class="pts">
     <li>裏方: <code>uvicorn main:app --port 8000</code><small>（ターミナルはここだけ）</small></li>
-    <li>Claude Code / Cursor: 設定に <b>URL + 合鍵</b>を書くだけ<small>（手順は付録②）</small></li>
-    <li>Claude Desktop: <code>.mcpb</code> をダブルクリック<small>（作り方・入れ方は付録②③）</small></li>
+    <li>Claude Code / Cursor: 設定に <b>URL + 合鍵</b>を書くだけ<small>（同梱の .mcp.json.example をコピー。手順は付録②）</small></li>
     <li>会話:「ユーザー一覧見せて」→ <code>list_users</code> ／「登録して」→ <code>create_user</code></li>
     <li>「1 番を削除して」→ <b>道具が無いので断られる</b>（見せ場）</li>
   </ul>
-  <p class="note">MCP はオープン規格なので、Claude 以外の AI クライアントからも同じ URL につなげる。</p>
+  <p class="note">MCP はオープン規格なので、Claude 以外の AI クライアントからも同じ URL につなげる。Claude Desktop などに配る方法は付録③。</p>
 </section>
 
 <!-- 10. summary -->
@@ -268,7 +267,7 @@ mcp.mount_http()   <span class="c"># → http://localhost:8000/mcp</span></pre>
     <li>コード: <code>github.com/d-bui/mcp-from-scratch</code> ／ この後ろに<b>付録（手順書）3 枚</b></li>
     <li>質問どうぞ！</li>
   </ul>
-  <p class="note">参考: MCP 自体はオープン規格（modelcontextprotocol.io）で、ChatGPT / Cursor / Gemini など他の AI クライアントからも同じサーバーにつなげる。<code>.mcpb</code> だけが Claude Desktop 用の配布形式（他クライアントは JSON 設定や URL 接続を使う）。</p>
+  <p class="note">参考: MCP 自体はオープン規格（modelcontextprotocol.io）で、ChatGPT / Cursor / Gemini など他の AI クライアントからも同じサーバーにつなげる。</p>
 </section>
 
 <!-- appendix A: run the server -->
