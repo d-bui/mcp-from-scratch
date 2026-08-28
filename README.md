@@ -2,7 +2,7 @@
 
 FastAPI 製の小さなユーザー管理 API に、**AI（Claude など）向けの MCP** を載せる最小デモ。
 [fastapi-mcp](https://github.com/tadata-org/fastapi_mcp) が API から MCP を自動生成する
-ので、本体は **`main.py` 1 ファイル（129 行）**。ローカル専用。
+ので、本体は **`main.py` 1 ファイルだけ**。ローカル専用。
 
 ```
 mcp-from-scratch/
