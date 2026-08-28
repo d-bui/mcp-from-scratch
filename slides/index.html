@@ -298,9 +298,9 @@ $ ./venv/bin/uvicorn main:app --port 8000
 2. フォームに URL（既定のまま）と合鍵 agent-demo-key を入力 → 完了</pre></div>
     </div>
     <div>
-      <div class="lbl">Claude Code ― 1 コマンド（リポジトリ内なら .mcp.json が自動検出されるので不要）</div>
-      <div class="shot"><pre>$ claude mcp add --transport http users http://localhost:8000/mcp \
-    --header <span class="s">"Authorization: Bearer agent-demo-key"</span></pre></div>
+      <div class="lbl">Claude Code ― .mcp.json を置くだけ（URL + 合鍵を書いた設定ファイル）</div>
+      <div class="shot"><pre>$ cp .mcp.json.example .mcp.json   <span class="c"># 同梱の例をコピー</span>
+$ claude                           <span class="c"># フォルダで開くと自動検出 → 初回に承認 → /mcp でツール一覧</span></pre></div>
     </div>
     <div>
       <div class="lbl">Cursor ― .cursor/mcp.json に書くだけ</div>
