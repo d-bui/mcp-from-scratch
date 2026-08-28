@@ -148,7 +148,7 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
     <div class="dbox human"><span class="t">読む③ ふつうの CRUD</span> <span class="d">ただの FastAPI エンドポイント（docstring があとで効く）</span></div>
     <div class="eyebrow" style="margin:1.2vh 0 0; color:var(--ok)">後半 ― ここから AI のための追加</div>
     <div class="dbox reg"><span class="t">読む④ AI の合鍵と MCP 化</span> <span class="d">合鍵 1 行 + リストに書いた操作だけ AI の道具になる</span></div>
-    <div class="dbox mcp"><span class="t">読む⑤ 動かしてつなぐ</span> <span class="d">uvicorn で起動 → AI は URL（/mcp）につなぐだけ</span></div>
+    <div class="dbox mcp"><span class="t">読む⑤ 動かしてつなぐ</span> <span class="d">python main.py で起動 → AI は URL（/mcp）につなぐだけ</span></div>
   </div>
   <p class="note">AI のための追加は<b>ファイル後半にまとまっている</b>。前半だけなら、ただの「ログインつき Web アプリ」として動く。この順に上から読む。</p>
 </section>
@@ -248,7 +248,7 @@ mcp.mount_http()   <span class="c"># → http://localhost:8000/mcp</span></pre>
   <div class="eyebrow">読む⑤ 動かしてつなぐ</div>
   <h2>起動したら、AI は「つなぐだけ」</h2>
   <ul class="pts">
-    <li>裏方: <code>uvicorn main:app --port 8000</code><small>（ターミナルはここだけ）</small></li>
+    <li>裏方: <code>python main.py</code> で起動<small>（ポートは 8000 固定。ターミナルはここだけ）</small></li>
     <li>Claude Code / Cursor: 設定に <b>URL + 合鍵</b>を書くだけ<small>（同梱の .mcp.json.example をコピー。手順は付録②）</small></li>
     <li>会話:「ユーザー一覧見せて」→ <code>list_users</code> ／「登録して」→ <code>create_user</code></li>
     <li>「1 番を削除して」→ <b>道具が無いので断られる</b>（見せ場）</li>
@@ -280,8 +280,8 @@ mcp.mount_http()   <span class="c"># → http://localhost:8000/mcp</span></pre>
 $ cd mcp-from-scratch
 $ python3 -m venv venv
 $ ./venv/bin/pip install -r requirements.txt
-$ ./venv/bin/uvicorn main:app --port 8000
-<span class="c"># → MCP エンドポイント: http://localhost:8000/mcp</span>
+$ ./venv/bin/python main.py
+<span class="c"># → ポートは 8000 固定。MCP エンドポイント: http://localhost:8000/mcp</span>
 <span class="c"># デモの人間ユーザー: alice / demo ／ AI 用の合鍵: agent-demo-key</span></pre>
   </div>
   <p class="note">動作確認は README の curl 例で。人間トークンで削除が 200、AI の合鍵で削除が 403 になれば正常。</p>

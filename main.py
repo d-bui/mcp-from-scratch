@@ -6,9 +6,9 @@
 #   読む③ ふつうの CRUD          … ただの FastAPI（docstring があとで効く）
 #   ── ここから AI のための追加 ──
 #   読む④ AI の合鍵と MCP 化     … 合鍵 1 行 + リストに書いた操作だけ AI の道具になる
-#   読む⑤ 動かしてつなぐ         … uvicorn で起動 → ローカル URL（/mcp）につなぐ。.mcpb は任意（mcpb/）
+#   読む⑤ 動かしてつなぐ         … python main.py で起動（ポート 8000 固定）→ /mcp につなぐ
 #
-# 起動:  uvicorn main:app --port 8000
+# 起動:  python main.py（ポートは 8000 固定）
 # 接続:  Claude Code → claude mcp add --transport http users \
 #            http://localhost:8000/mcp --header "Authorization: Bearer agent-demo-key"
 #        Cursor → .cursor/mcp.json に url + headers を書く

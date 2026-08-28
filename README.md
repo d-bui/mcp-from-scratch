@@ -39,7 +39,7 @@ mcp-from-scratch/
 
 ```bash
 python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
-./venv/bin/uvicorn main:app --port 8000     # MCP は http://localhost:8000/mcp
+./venv/bin/python main.py                   # ポートは 8000 固定。MCP は http://localhost:8000/mcp
 ```
 
 人間の流れ（デモユーザー: alice / demo）:
