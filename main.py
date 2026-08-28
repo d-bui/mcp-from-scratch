@@ -12,6 +12,7 @@
 # 接続:  Claude Code → cp .mcp.json.example .mcp.json してこのフォルダで開く（/mcp でツール確認）
 #        Cursor → .cursor/mcp.json に url + headers を書く ／ Claude Desktop → mcpb/ 参照
 
+import os
 import secrets
 
 from fastapi import Depends, FastAPI, Header, HTTPException
@@ -29,6 +30,10 @@ users = [
 # 人間はログインしてセッショントークン（usr_...）をもらう — いつもの Web と同じ
 LOGIN_USERS = {"alice": "demo"}
 sessions: dict[str, str] = {}  # token -> login_id
+
+# テスト用スイッチ（既定 OFF）: AUTH_SKIP=1 python main.py で起動すると、
+# トークン無しのリクエストを人間ユーザー扱いにする（ログイン省略）。発表デモでは使わない。
+AUTH_SKIP = os.environ.get("AUTH_SKIP") == "1"
 
 app = FastAPI(title="Users API")
 
@@ -56,6 +61,8 @@ def get_actor(authorization: str | None = Header(None)) -> dict:
         return {"type": "user", "login_id": sessions[token]}
     if token in AGENT_KEYS:  # AI 用の合鍵。定義は下の「AI のための追加」（読む④）
         return {"type": "agent"}
+    if AUTH_SKIP:  # テスト用: トークン無し = 人間扱い（合鍵を出した AI はここに来ない）
+        return {"type": "user", "login_id": "dev"}
     raise HTTPException(401, "有効なトークンがありません")
 
 

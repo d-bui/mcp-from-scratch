@@ -42,6 +42,10 @@ python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
 ./venv/bin/python main.py                   # ポートは 8000 固定。MCP は http://localhost:8000/mcp
 ```
 
+急いでテストしたいとき: `AUTH_SKIP=1 ./venv/bin/python main.py` で起動すると
+**トークン無しのリクエストが人間扱い**になりログイン不要（合鍵を出した AI は通常どおり）。
+テスト用スイッチなので、発表デモや共有時は付けない。
+
 人間の流れ（デモユーザー: alice / demo）:
 
 ```bash
