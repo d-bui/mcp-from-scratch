@@ -102,6 +102,8 @@ npx @anthropic-ai/mcpb pack . ../dist/users-mcp-local.mcpb
   `requirements.txt` で `mcp>=1.12,<2` に固定している。
 - MCP はオープン規格 — Claude 以外の AI クライアント（ChatGPT / Cursor / Gemini など）
   からも同じサーバーにつなげる。`.mcpb` だけが Claude Desktop 専用の配布形式。
+- AI 側の認証はデモでは PAT（固定キー）。リモート公開して本格運用するなら、
+  MCP 標準の OAuth フローにする設計もある。
 - MCP 仕様・ドキュメント: https://modelcontextprotocol.io
 - fastapi-mcp: https://github.com/tadata-org/fastapi_mcp
 - MCPB（manifest 仕様 + CLI）: https://github.com/anthropics/mcpb

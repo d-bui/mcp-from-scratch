@@ -177,7 +177,7 @@ sessions: dict[str, str] = {}
 <span class="k">def</span> <span class="fn">user_only</span>(actor: dict = Depends(get_actor)) -&gt; dict:
     <span class="s">"""門番: 破壊的操作に付ける。AI の合鍵なら 403。"""</span></pre>
   </div>
-  <p class="note">トークン発行も 401 も、いつもの Web と同じ作り。<b>唯一の伏線は、受付が「AI の合鍵」も見ること</b>（鍵そのものは読む④で登場）。削除には <code>Depends(user_only)</code> を付けるだけ。</p>
+  <p class="note">トークン発行も 401 も、いつもの Web と同じ作り。<b>唯一の伏線は、受付が「AI の合鍵」も見ること</b>（鍵そのものは読む④で登場）。削除には <code>Depends(user_only)</code> を付けるだけ。なお AI 側の認証は、合鍵（PAT）の代わりに <b>OAuth</b> を使う設計もある（リモート公開の本格運用向け）。</p>
 </section>
 
 <!-- 6. read 3: plain crud -->
@@ -253,7 +253,7 @@ mcp.mount_http()   <span class="c"># → http://localhost:8000/mcp</span></pre>
     <li>会話:「ユーザー一覧見せて」→ <code>list_users</code> ／「登録して」→ <code>create_user</code></li>
     <li>「1 番を削除して」→ <b>道具が無いので断られる</b>（見せ場）</li>
   </ul>
-  <p class="note">MCP はオープン規格なので、Claude 以外の AI クライアントからも同じ URL につなげる。Claude Desktop などに配る方法は付録③。</p>
+  <p class="note">MCP はオープン規格なので、Claude 以外の AI クライアントからも同じ URL につなげる。ローカルで配って使いたい場合（Claude Desktop など）は <code>.mcpb</code> に詰める方法がある — 付録③。</p>
 </section>
 
 <!-- 10. summary -->
