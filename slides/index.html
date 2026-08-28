@@ -108,6 +108,31 @@ kbd { font-family: var(--mono); background: var(--bg2); border: 1px solid var(--
   <div class="author">発表者：ミズン ／ コードは GitHub で共有します</div>
 </section>
 
+<!-- 1b. why build mcp -->
+<section class="slide">
+  <div class="eyebrow">なぜ作る？</div>
+  <h2>管理画面がまだ無くても、管理は始められる</h2>
+  <div class="two">
+    <div>
+      <div class="eyebrow" style="color:var(--no)">これまで</div>
+      <ul class="pts">
+        <li>API は<b>すぐできる</b><small>（AI エージェントが書く時代）</small></li>
+        <li>でも管理画面（フロントエンド）は<b>時間がかかる</b></li>
+        <li>画面ができるまでは<b>DB 直叩き</b><br><small>= エンジニアしか触れない・危ない</small></li>
+      </ul>
+    </div>
+    <div>
+      <div class="eyebrow" style="color:var(--ok)">MCP を作ると</div>
+      <ul class="pts">
+        <li>できている API を<b>包むだけ</b></li>
+        <li><b>ビジネスチームも会話で</b>アプリを管理できる</li>
+        <li>フロントエンドは<b>後からゆっくり</b>作ればいい</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note">画面より先に<b>「AI がつなげる形」</b>で出す — 待ち時間ゼロで運用が始まり、DB 直叩きも無くなる。権限チェックは API を必ず通るので安全。</p>
+</section>
+
 <!-- 2. what is mcp: toolbox -->
 <section class="slide">
   <div class="eyebrow">はじめに</div>
