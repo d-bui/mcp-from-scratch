@@ -9,9 +9,8 @@
 #   読む⑤ 動かしてつなぐ         … python main.py で起動（ポート 8000 固定）→ /mcp につなぐ
 #
 # 起動:  python main.py（ポートは 8000 固定）
-# 接続:  Claude Code → claude mcp add --transport http users \
-#            http://localhost:8000/mcp --header "Authorization: Bearer agent-demo-key"
-#        Cursor → .cursor/mcp.json に url + headers を書く
+# 接続:  Claude Code → cp .mcp.json.example .mcp.json してこのフォルダで開く（/mcp でツール確認）
+#        Cursor → .cursor/mcp.json に url + headers を書く ／ Claude Desktop → mcpb/ 参照
 
 import secrets
 
