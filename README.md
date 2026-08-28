@@ -1,4 +1,4 @@
-# MCP サーバーを作る ― FastAPI デモ
+# シンプルな MCP サーバーを作る ― FastAPI デモ
 
 FastAPI 製の小さなユーザー管理 API に、**AI（Claude など）向けの MCP** を載せる最小デモ。
 [fastapi-mcp](https://github.com/tadata-org/fastapi_mcp) が API から MCP を自動生成する
