@@ -220,13 +220,13 @@ mcp = FastApiMCP(
     name=<span class="s">"Users MCP"</span>,
 <span class="hl">    include_operations=[</span>
 <span class="hl">        <span class="s">"list_users"</span>, <span class="s">"get_user"</span>, <span class="s">"create_user"</span>,</span>
-<span class="hl">        <span class="c"># delete_user と login はわざと書かない = AI から見えない道具</span></span>
+<span class="hl">        <span class="c"># update_user・delete_user・login はわざと書かない = AI から見えない道具</span></span>
 <span class="hl">    ],</span>
     auth_config=AuthConfig(dependencies=[Depends(get_actor)]),  <span class="c"># /mcp 自体にも合鍵</span>
 )
 mcp.mount_http()   <span class="c"># → http://localhost:8000/mcp</span></pre>
   </div>
-  <p class="note">結果: 一覧・取得・追加は人間も AI も OK、<b>削除は人間だけ</b>（AI は道具が無く断り、REST を直接叩いても門番が 403 — 二段構え）。「この辺は全部 OK」とざっくり開けると<b>開けたくないものまで開く事故</b>が起きる（実体験）。</p>
+  <p class="note">結果: 一覧・取得・追加は人間も AI も OK、<b>更新・削除は人間だけ</b>（AI は道具が無く断り、REST を直接叩いても門番が 403 — 二段構え）。「この辺は全部 OK」とざっくり開けると<b>開けたくないものまで開く事故</b>が起きる（実体験）。</p>
 </section>
 
 <!-- 8. read 4b: what the ai sees -->

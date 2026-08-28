@@ -102,6 +102,16 @@ def create_user(body: UserBody, actor: dict = Depends(get_actor)):
     return {"user": user}
 
 
+@app.put("/users/{id}", operation_id="update_user")
+def update_user(id: int, body: UserBody, actor: dict = Depends(user_only)):
+    """ユーザーの名前と email を書き換える（人間専用。AI の道具にもしない）。"""
+    for user in users:
+        if user["id"] == id:
+            user.update(body.model_dump())
+            return {"user": user}
+    raise HTTPException(404, "そのユーザーはいません")
+
+
 @app.delete("/users/{id}", operation_id="delete_user")
 def delete_user(id: int, actor: dict = Depends(user_only)):
     """ユーザーを削除する（人間専用。AI の道具にもしない = 二重ガード）。"""
@@ -126,7 +136,7 @@ mcp = FastApiMCP(
     name="Users MCP",
     include_operations=[
         "list_users", "get_user", "create_user",
-        # delete_user と login はわざと書かない = AI から見えない道具
+        # update_user・delete_user・login はわざと書かない = AI から見えない道具
     ],
     auth_config=AuthConfig(dependencies=[Depends(get_actor)]),
 )
