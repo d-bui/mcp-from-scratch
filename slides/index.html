@@ -159,31 +159,16 @@ mcp.mount_http()                     <span class="c"># 読む⑤ → http://loca
   <p class="note"><b>入口は 2 つ（人間はログイン、AI は合鍵）、中身は 1 つ</b>。この順にそのまま読んでいく。</p>
 </section>
 
-<!-- 4. read 1: data and keys -->
-<section class="slide">
-  <div class="eyebrow">読む① データと鍵</div>
-  <h2>鍵が 2 種類ある <small>― ここがこのデモの軸</small></h2>
-  <div class="shot">
-    <div class="file"><span class="dot"></span>main.py ― データと鍵</div>
-    <pre>users = [
-    {<span class="s">"id"</span>: <span class="s">1</span>, <span class="s">"name"</span>: <span class="s">"佐藤 太郎"</span>, <span class="s">"email"</span>: <span class="s">"sato@example.com"</span>},
-    ...
-]
-
-<span class="hl">LOGIN_USERS = {<span class="s">"alice"</span>: <span class="s">"demo"</span>}      <span class="c"># 人間: ログインして入る</span></span>
-<span class="hl">AGENT_KEYS = {<span class="s">"agent-demo-key"</span>}      <span class="c"># AI: 事前に渡してある合鍵（PAT）</span></span>
-sessions: dict[str, str] = {}        <span class="c"># 発行した入館証 → 誰のものか</span></pre>
-  </div>
-  <p class="note">実務では合鍵を DB にハッシュ保存し、1 人ずつ発行・失効・記録を管理する（デモは固定 1 本）。データもメモリではなく DB になる。</p>
-</section>
-
 <!-- 5. read 2: reception and gatekeeper -->
 <section class="slide">
-  <div class="eyebrow">読む② 受付と門番</div>
-  <h2>入口で見分けて、門番が守る</h2>
+  <div class="eyebrow">読む①② データと鍵 → 受付と門番</div>
+  <h2>鍵は 2 種類。入口で見分けて、門番が守る</h2>
   <div class="shot">
-    <div class="file"><span class="dot"></span>main.py ― 受付と門番</div>
-    <pre><span class="k">def</span> <span class="fn">get_actor</span>(authorization: str | <span class="k">None</span> = Header(<span class="k">None</span>)) -&gt; dict:
+    <div class="file"><span class="dot"></span>main.py ― 鍵と受付と門番</div>
+    <pre><span class="hl">LOGIN_USERS = {<span class="s">"alice"</span>: <span class="s">"demo"</span>}      <span class="c"># 人間: ログインして入る</span></span>
+<span class="hl">AGENT_KEYS = {<span class="s">"agent-demo-key"</span>}      <span class="c"># AI: 事前に渡してある合鍵（PAT）</span></span>
+
+<span class="k">def</span> <span class="fn">get_actor</span>(authorization: str | <span class="k">None</span> = Header(<span class="k">None</span>)) -&gt; dict:
     <span class="s">"""Bearer トークンを見て「人間か AI か」を確定する（入口は 1 箇所）。"""</span>
     token = (authorization <span class="k">or</span> <span class="s">""</span>).removeprefix(<span class="s">"Bearer "</span>).strip()
 <span class="hl">    <span class="k">if</span> token <span class="k">in</span> sessions:   <span class="k">return</span> {<span class="s">"type"</span>: <span class="s">"user"</span>, ...}  <span class="c"># ① 入館証？→人間</span></span>
