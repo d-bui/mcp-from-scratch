@@ -2,7 +2,7 @@
 
 FastAPI 製の小さなユーザー管理 API に、**AI（Claude など）向けの MCP** を載せる最小デモ。
 [fastapi-mcp](https://github.com/tadata-org/fastapi_mcp) が API から MCP を自動生成する
-ので、本体は **`main.py` 1 ファイル（約 130 行）**。ローカル専用。
+ので、本体は **`main.py` 1 ファイル（129 行）**。ローカル専用。
 
 ```
 mcp-from-scratch/
@@ -13,15 +13,15 @@ mcp-from-scratch/
 └── slides/index.html  # 発表スライド（ブラウザで開く）
 ```
 
-## 部品は 5 つ（すべて main.py 内）
+## 読みどころは 5 つ（main.py を上から順に）
 
-| 部品 | main.py の場所 | やること |
+| 読む順 | main.py の場所 | 内容 |
 |---|---|---|
-| ① 土台の API | `@app.get("/users")` など | ふつうの CRUD |
-| ② 入口（受付） | `login()` / `AGENT_KEYS` / `get_actor()` / `user_only()` | 人間 = ログイン、AI = 合鍵。入口で見分ける |
-| ③ やっていいことリスト | `include_operations=[...]` | ここに書いた操作だけ AI の道具になる |
-| ④ AI への説明係 | `FastApiMCP(app, ...)` | docstring から道具＋説明文を自動生成 |
-| ⑤ つなぎ方 | `/mcp`（URL 接続） | ローカル URL でつなぐ（.mcpb は任意） |
+| ① データと鍵 | `users` / `LOGIN_USERS` / `AGENT_KEYS` | デモデータと 2 種類の鍵（人間・AI） |
+| ② 受付と門番 | `get_actor()` / `user_only()` | 入口で見分け、破壊的操作は人間専用に |
+| ③ ふつうの CRUD | `@app.get("/users")` など | ただの FastAPI（docstring があとで効く） |
+| ④ MCP 化 | `FastApiMCP(app, include_operations=[...])` | リストに書いた操作だけ AI の道具に。説明文は docstring から自動生成 |
+| ⑤ 動かしてつなぐ | `mcp.mount_http()` → `/mcp` | ローカル URL でつなぐ（.mcpb は任意） |
 
 ## 権限マトリクス
 
@@ -32,7 +32,7 @@ mcp-from-scratch/
 | 削除 | ✔ | ✘ 403（人間専用ガード） |
 | /mcp につなぐ | ― | ✔ 合鍵必須 |
 
-削除は「③ リストに入れない（AI から見えない）」＋「`user_only` ガードで 403」の
+削除は「リストに入れない（AI から見えない）」＋「`user_only` の門番で 403」の
 **二段構え**。
 
 ## 動かし方
@@ -69,7 +69,7 @@ claude mcp add --transport http users http://localhost:8000/mcp \
 Cursor は `.cursor/mcp.json` に `url` + `headers` を書くだけ。
 
 会話例: 「ユーザー一覧見せて」→ `list_users`。「2 番を削除して」→ AI は削除の道具を
-持っていないので断ってくる（③ の見せ場）。
+持っていないので断ってくる（読む④ の見せ場）。
 
 ## Claude Desktop 用 `.mcpb`（任意）
 
